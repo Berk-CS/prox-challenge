@@ -47,18 +47,18 @@ CRITICAL DIRECTIONS:
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
-    
+
     // Extract standard message format or just the last query
     let promptText = "";
     if (Array.isArray(messages)) {
       const lastMsg = messages[messages.length - 1];
-      promptText = lastMsg ? lastMsg.content : "";
+      promptText = lastMsg ? (lastMsg.content || lastMsg.text || "") : "";
     } else {
       promptText = String(messages || "");
     }
 
     if (!promptText) {
-      return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
+      return NextResponse.json({ error: "No prompt provided - please ensure messages is non-empty and has a valid prompt string in the 'text' or 'content' field." }, { status: 400 });
     }
 
     // Set up SSE Stream headers
@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
             prompt: promptText,
             options: {
               cwd: process.cwd(),
+              model: "claude-5-sonnet",
               agent: "vulcan-expert",
               agents: {
                 "vulcan-expert": {

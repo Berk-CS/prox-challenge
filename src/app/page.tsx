@@ -372,7 +372,8 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP Error: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
