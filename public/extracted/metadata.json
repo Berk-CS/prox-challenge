@@ -1,0 +1,1682 @@
+{
+  "owner-manual": {
+    "title": "Owner Manual",
+    "path": "files/owner-manual.pdf",
+    "pages": [
+      {
+        "page_number": 1,
+        "text_file": "/extracted/text/owner-manual/page_1.md",
+        "images": [
+          {
+            "filename": "page_1_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_1_1.jpeg",
+            "index": 1
+          }
+        ],
+        "keywords": [],
+        "preview_snippet": "OMNIPRO 220 MULTIPROCESS WELDING SYSTEM Visit our website at: https://www.harborfreight.com email our technical support at: productsupport@harborfreig..."
+      },
+      {
+        "page_number": 2,
+        "text_file": "/extracted/text/owner-manual/page_2.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored"
+        ],
+        "preview_snippet": "Page 2 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Table of Contents S..."
+      },
+      {
+        "page_number": 3,
+        "text_file": "/extracted/text/owner-manual/page_3.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 3 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Fume and Gas Safety..."
+      },
+      {
+        "page_number": 4,
+        "text_file": "/extracted/text/owner-manual/page_4.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 4 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Electrical Safety E..."
+      },
+      {
+        "page_number": 5,
+        "text_file": "/extracted/text/owner-manual/page_5.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 5 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Welder Use and Care..."
+      },
+      {
+        "page_number": 6,
+        "text_file": "/extracted/text/owner-manual/page_6.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 6 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Symbology Wire Feed..."
+      },
+      {
+        "page_number": 7,
+        "text_file": "/extracted/text/owner-manual/page_7.md",
+        "images": [],
+        "keywords": [
+          "duty cycle",
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 7 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Specifications MIG ..."
+      },
+      {
+        "page_number": 8,
+        "text_file": "/extracted/text/owner-manual/page_8.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 8 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Controls Front Pane..."
+      },
+      {
+        "page_number": 9,
+        "text_file": "/extracted/text/owner-manual/page_9.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 9 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Interior Controls C..."
+      },
+      {
+        "page_number": 10,
+        "text_file": "/extracted/text/owner-manual/page_10.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 10 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE 1.\t Turn the Power..."
+      },
+      {
+        "page_number": 11,
+        "text_file": "/extracted/text/owner-manual/page_11.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 11 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire 6.\t 10-12 Pound Wi..."
+      },
+      {
+        "page_number": 12,
+        "text_file": "/extracted/text/owner-manual/page_12.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 12 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE 12.\tFeed Roller In..."
+      },
+      {
+        "page_number": 13,
+        "text_file": "/extracted/text/owner-manual/page_13.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 13 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire 13.\tLoosen the Kno..."
+      },
+      {
+        "page_number": 14,
+        "text_file": "/extracted/text/owner-manual/page_14.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 14 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE 17.\tDCEP Direct\u00a0Cu..."
+      },
+      {
+        "page_number": 15,
+        "text_file": "/extracted/text/owner-manual/page_15.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 15 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire IMPORTANT Securely..."
+      },
+      {
+        "page_number": 16,
+        "text_file": "/extracted/text/owner-manual/page_16.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 16 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE DANGER PARTS MAY B..."
+      },
+      {
+        "page_number": 17,
+        "text_file": "/extracted/text/owner-manual/page_17.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 17 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire 27.\tTo check the w..."
+      },
+      {
+        "page_number": 18,
+        "text_file": "/extracted/text/owner-manual/page_18.md",
+        "images": [],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored"
+        ],
+        "preview_snippet": "Page 18 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Basic Wire Welding..."
+      },
+      {
+        "page_number": 19,
+        "text_file": "/extracted/text/owner-manual/page_19.md",
+        "images": [
+          {
+            "filename": "page_19_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_19_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_19_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_19_2.jpeg",
+            "index": 2
+          }
+        ],
+        "keywords": [
+          "duty cycle",
+          "polarity",
+          "mig",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 19 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Setting Up The Wel..."
+      },
+      {
+        "page_number": 20,
+        "text_file": "/extracted/text/owner-manual/page_20.md",
+        "images": [
+          {
+            "filename": "page_20_1.png",
+            "url": "/extracted/images/owner-manual/page_20_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_20_2.png",
+            "url": "/extracted/images/owner-manual/page_20_2.png",
+            "index": 2
+          },
+          {
+            "filename": "page_20_3.png",
+            "url": "/extracted/images/owner-manual/page_20_3.png",
+            "index": 3
+          },
+          {
+            "filename": "page_20_4.png",
+            "url": "/extracted/images/owner-manual/page_20_4.png",
+            "index": 4
+          }
+        ],
+        "keywords": [
+          "schematics",
+          "polarity",
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 20 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE 4.\t Turn the Power..."
+      },
+      {
+        "page_number": 21,
+        "text_file": "/extracted/text/owner-manual/page_21.md",
+        "images": [
+          {
+            "filename": "page_21_1.png",
+            "url": "/extracted/images/owner-manual/page_21_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_21_2.png",
+            "url": "/extracted/images/owner-manual/page_21_2.png",
+            "index": 2
+          },
+          {
+            "filename": "page_21_3.png",
+            "url": "/extracted/images/owner-manual/page_21_3.png",
+            "index": 3
+          },
+          {
+            "filename": "page_21_4.png",
+            "url": "/extracted/images/owner-manual/page_21_4.png",
+            "index": 4
+          },
+          {
+            "filename": "page_21_5.png",
+            "url": "/extracted/images/owner-manual/page_21_5.png",
+            "index": 5
+          }
+        ],
+        "keywords": [
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 21 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire d.\t Optional Setti..."
+      },
+      {
+        "page_number": 22,
+        "text_file": "/extracted/text/owner-manual/page_22.md",
+        "images": [
+          {
+            "filename": "page_22_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_22_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_22_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_22_2.jpeg",
+            "index": 2
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored"
+        ],
+        "preview_snippet": "Page 22 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE 1.\t Basic Wire Wel..."
+      },
+      {
+        "page_number": 23,
+        "text_file": "/extracted/text/owner-manual/page_23.md",
+        "images": [
+          {
+            "filename": "page_23_1.png",
+            "url": "/extracted/images/owner-manual/page_23_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_23_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_23_2.jpeg",
+            "index": 2
+          },
+          {
+            "filename": "page_23_3.jpeg",
+            "url": "/extracted/images/owner-manual/page_23_3.jpeg",
+            "index": 3
+          },
+          {
+            "filename": "page_23_4.jpeg",
+            "url": "/extracted/images/owner-manual/page_23_4.jpeg",
+            "index": 4
+          }
+        ],
+        "keywords": [
+          "duty cycle",
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 23 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Note:  If Welder i..."
+      },
+      {
+        "page_number": 24,
+        "text_file": "/extracted/text/owner-manual/page_24.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 24 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE TIG\u200a/\u200aStick Weldin..."
+      },
+      {
+        "page_number": 25,
+        "text_file": "/extracted/text/owner-manual/page_25.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 25 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Connect Shielding ..."
+      },
+      {
+        "page_number": 26,
+        "text_file": "/extracted/text/owner-manual/page_26.md",
+        "images": [
+          {
+            "filename": "page_26_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_26_1.jpeg",
+            "index": 1
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 26 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Sharpen Tungsten E..."
+      },
+      {
+        "page_number": 27,
+        "text_file": "/extracted/text/owner-manual/page_27.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 27 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Stick Setup Connec..."
+      },
+      {
+        "page_number": 28,
+        "text_file": "/extracted/text/owner-manual/page_28.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 28 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Basic TIG\u200a/\u200aStick ..."
+      },
+      {
+        "page_number": 29,
+        "text_file": "/extracted/text/owner-manual/page_29.md",
+        "images": [
+          {
+            "filename": "page_29_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_29_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_2.jpeg",
+            "index": 2
+          },
+          {
+            "filename": "page_29_3.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_3.jpeg",
+            "index": 3
+          },
+          {
+            "filename": "page_29_4.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_4.jpeg",
+            "index": 4
+          },
+          {
+            "filename": "page_29_5.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_5.jpeg",
+            "index": 5
+          },
+          {
+            "filename": "page_29_6.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_6.jpeg",
+            "index": 6
+          },
+          {
+            "filename": "page_29_7.png",
+            "url": "/extracted/images/owner-manual/page_29_7.png",
+            "index": 7
+          },
+          {
+            "filename": "page_29_8.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_8.jpeg",
+            "index": 8
+          },
+          {
+            "filename": "page_29_9.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_9.jpeg",
+            "index": 9
+          },
+          {
+            "filename": "page_29_10.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_10.jpeg",
+            "index": 10
+          },
+          {
+            "filename": "page_29_11.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_11.jpeg",
+            "index": 11
+          },
+          {
+            "filename": "page_29_12.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_12.jpeg",
+            "index": 12
+          },
+          {
+            "filename": "page_29_13.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_13.jpeg",
+            "index": 13
+          },
+          {
+            "filename": "page_29_14.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_14.jpeg",
+            "index": 14
+          },
+          {
+            "filename": "page_29_15.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_15.jpeg",
+            "index": 15
+          },
+          {
+            "filename": "page_29_16.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_16.jpeg",
+            "index": 16
+          },
+          {
+            "filename": "page_29_17.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_17.jpeg",
+            "index": 17
+          },
+          {
+            "filename": "page_29_18.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_18.jpeg",
+            "index": 18
+          },
+          {
+            "filename": "page_29_19.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_19.jpeg",
+            "index": 19
+          },
+          {
+            "filename": "page_29_20.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_20.jpeg",
+            "index": 20
+          },
+          {
+            "filename": "page_29_21.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_21.jpeg",
+            "index": 21
+          },
+          {
+            "filename": "page_29_22.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_22.jpeg",
+            "index": 22
+          },
+          {
+            "filename": "page_29_23.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_23.jpeg",
+            "index": 23
+          },
+          {
+            "filename": "page_29_24.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_24.jpeg",
+            "index": 24
+          },
+          {
+            "filename": "page_29_25.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_25.jpeg",
+            "index": 25
+          },
+          {
+            "filename": "page_29_26.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_26.jpeg",
+            "index": 26
+          },
+          {
+            "filename": "page_29_27.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_27.jpeg",
+            "index": 27
+          },
+          {
+            "filename": "page_29_28.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_28.jpeg",
+            "index": 28
+          },
+          {
+            "filename": "page_29_29.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_29.jpeg",
+            "index": 29
+          },
+          {
+            "filename": "page_29_30.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_30.jpeg",
+            "index": 30
+          },
+          {
+            "filename": "page_29_31.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_31.jpeg",
+            "index": 31
+          },
+          {
+            "filename": "page_29_32.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_32.jpeg",
+            "index": 32
+          },
+          {
+            "filename": "page_29_33.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_33.jpeg",
+            "index": 33
+          },
+          {
+            "filename": "page_29_34.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_34.jpeg",
+            "index": 34
+          },
+          {
+            "filename": "page_29_35.png",
+            "url": "/extracted/images/owner-manual/page_29_35.png",
+            "index": 35
+          },
+          {
+            "filename": "page_29_36.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_36.jpeg",
+            "index": 36
+          },
+          {
+            "filename": "page_29_37.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_37.jpeg",
+            "index": 37
+          },
+          {
+            "filename": "page_29_38.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_38.jpeg",
+            "index": 38
+          },
+          {
+            "filename": "page_29_39.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_39.jpeg",
+            "index": 39
+          },
+          {
+            "filename": "page_29_40.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_40.jpeg",
+            "index": 40
+          },
+          {
+            "filename": "page_29_41.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_41.jpeg",
+            "index": 41
+          },
+          {
+            "filename": "page_29_42.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_42.jpeg",
+            "index": 42
+          },
+          {
+            "filename": "page_29_43.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_43.jpeg",
+            "index": 43
+          },
+          {
+            "filename": "page_29_44.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_44.jpeg",
+            "index": 44
+          },
+          {
+            "filename": "page_29_45.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_45.jpeg",
+            "index": 45
+          },
+          {
+            "filename": "page_29_46.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_46.jpeg",
+            "index": 46
+          },
+          {
+            "filename": "page_29_47.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_47.jpeg",
+            "index": 47
+          },
+          {
+            "filename": "page_29_48.png",
+            "url": "/extracted/images/owner-manual/page_29_48.png",
+            "index": 48
+          },
+          {
+            "filename": "page_29_49.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_49.jpeg",
+            "index": 49
+          },
+          {
+            "filename": "page_29_50.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_50.jpeg",
+            "index": 50
+          },
+          {
+            "filename": "page_29_51.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_51.jpeg",
+            "index": 51
+          },
+          {
+            "filename": "page_29_52.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_52.jpeg",
+            "index": 52
+          },
+          {
+            "filename": "page_29_53.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_53.jpeg",
+            "index": 53
+          },
+          {
+            "filename": "page_29_54.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_54.jpeg",
+            "index": 54
+          },
+          {
+            "filename": "page_29_55.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_55.jpeg",
+            "index": 55
+          },
+          {
+            "filename": "page_29_56.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_56.jpeg",
+            "index": 56
+          },
+          {
+            "filename": "page_29_57.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_57.jpeg",
+            "index": 57
+          },
+          {
+            "filename": "page_29_58.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_58.jpeg",
+            "index": 58
+          },
+          {
+            "filename": "page_29_59.png",
+            "url": "/extracted/images/owner-manual/page_29_59.png",
+            "index": 59
+          },
+          {
+            "filename": "page_29_60.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_60.jpeg",
+            "index": 60
+          },
+          {
+            "filename": "page_29_61.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_61.jpeg",
+            "index": 61
+          },
+          {
+            "filename": "page_29_62.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_62.jpeg",
+            "index": 62
+          },
+          {
+            "filename": "page_29_63.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_63.jpeg",
+            "index": 63
+          },
+          {
+            "filename": "page_29_64.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_64.jpeg",
+            "index": 64
+          },
+          {
+            "filename": "page_29_65.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_65.jpeg",
+            "index": 65
+          },
+          {
+            "filename": "page_29_66.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_66.jpeg",
+            "index": 66
+          },
+          {
+            "filename": "page_29_67.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_67.jpeg",
+            "index": 67
+          },
+          {
+            "filename": "page_29_68.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_68.jpeg",
+            "index": 68
+          },
+          {
+            "filename": "page_29_69.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_69.jpeg",
+            "index": 69
+          },
+          {
+            "filename": "page_29_70.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_70.jpeg",
+            "index": 70
+          },
+          {
+            "filename": "page_29_71.png",
+            "url": "/extracted/images/owner-manual/page_29_71.png",
+            "index": 71
+          },
+          {
+            "filename": "page_29_72.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_72.jpeg",
+            "index": 72
+          },
+          {
+            "filename": "page_29_73.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_73.jpeg",
+            "index": 73
+          },
+          {
+            "filename": "page_29_74.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_74.jpeg",
+            "index": 74
+          },
+          {
+            "filename": "page_29_75.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_75.jpeg",
+            "index": 75
+          },
+          {
+            "filename": "page_29_76.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_76.jpeg",
+            "index": 76
+          },
+          {
+            "filename": "page_29_77.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_77.jpeg",
+            "index": 77
+          },
+          {
+            "filename": "page_29_78.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_78.jpeg",
+            "index": 78
+          },
+          {
+            "filename": "page_29_79.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_79.jpeg",
+            "index": 79
+          },
+          {
+            "filename": "page_29_80.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_80.jpeg",
+            "index": 80
+          },
+          {
+            "filename": "page_29_81.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_81.jpeg",
+            "index": 81
+          },
+          {
+            "filename": "page_29_82.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_82.jpeg",
+            "index": 82
+          },
+          {
+            "filename": "page_29_83.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_83.jpeg",
+            "index": 83
+          },
+          {
+            "filename": "page_29_84.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_84.jpeg",
+            "index": 84
+          },
+          {
+            "filename": "page_29_85.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_85.jpeg",
+            "index": 85
+          },
+          {
+            "filename": "page_29_86.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_86.jpeg",
+            "index": 86
+          },
+          {
+            "filename": "page_29_87.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_87.jpeg",
+            "index": 87
+          },
+          {
+            "filename": "page_29_88.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_88.jpeg",
+            "index": 88
+          },
+          {
+            "filename": "page_29_89.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_89.jpeg",
+            "index": 89
+          },
+          {
+            "filename": "page_29_90.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_90.jpeg",
+            "index": 90
+          },
+          {
+            "filename": "page_29_91.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_91.jpeg",
+            "index": 91
+          },
+          {
+            "filename": "page_29_92.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_92.jpeg",
+            "index": 92
+          },
+          {
+            "filename": "page_29_93.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_93.jpeg",
+            "index": 93
+          },
+          {
+            "filename": "page_29_94.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_94.jpeg",
+            "index": 94
+          },
+          {
+            "filename": "page_29_95.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_95.jpeg",
+            "index": 95
+          },
+          {
+            "filename": "page_29_96.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_96.jpeg",
+            "index": 96
+          },
+          {
+            "filename": "page_29_97.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_97.jpeg",
+            "index": 97
+          },
+          {
+            "filename": "page_29_98.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_98.jpeg",
+            "index": 98
+          },
+          {
+            "filename": "page_29_99.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_99.jpeg",
+            "index": 99
+          },
+          {
+            "filename": "page_29_100.png",
+            "url": "/extracted/images/owner-manual/page_29_100.png",
+            "index": 100
+          },
+          {
+            "filename": "page_29_101.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_101.jpeg",
+            "index": 101
+          },
+          {
+            "filename": "page_29_102.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_102.jpeg",
+            "index": 102
+          },
+          {
+            "filename": "page_29_103.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_103.jpeg",
+            "index": 103
+          },
+          {
+            "filename": "page_29_104.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_104.jpeg",
+            "index": 104
+          },
+          {
+            "filename": "page_29_105.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_105.jpeg",
+            "index": 105
+          },
+          {
+            "filename": "page_29_106.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_106.jpeg",
+            "index": 106
+          },
+          {
+            "filename": "page_29_107.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_107.jpeg",
+            "index": 107
+          },
+          {
+            "filename": "page_29_108.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_108.jpeg",
+            "index": 108
+          },
+          {
+            "filename": "page_29_109.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_109.jpeg",
+            "index": 109
+          },
+          {
+            "filename": "page_29_110.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_110.jpeg",
+            "index": 110
+          },
+          {
+            "filename": "page_29_111.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_111.jpeg",
+            "index": 111
+          },
+          {
+            "filename": "page_29_112.png",
+            "url": "/extracted/images/owner-manual/page_29_112.png",
+            "index": 112
+          },
+          {
+            "filename": "page_29_113.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_113.jpeg",
+            "index": 113
+          },
+          {
+            "filename": "page_29_114.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_114.jpeg",
+            "index": 114
+          },
+          {
+            "filename": "page_29_115.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_115.jpeg",
+            "index": 115
+          },
+          {
+            "filename": "page_29_116.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_116.jpeg",
+            "index": 116
+          },
+          {
+            "filename": "page_29_117.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_117.jpeg",
+            "index": 117
+          },
+          {
+            "filename": "page_29_118.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_118.jpeg",
+            "index": 118
+          },
+          {
+            "filename": "page_29_119.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_119.jpeg",
+            "index": 119
+          },
+          {
+            "filename": "page_29_120.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_120.jpeg",
+            "index": 120
+          },
+          {
+            "filename": "page_29_121.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_121.jpeg",
+            "index": 121
+          },
+          {
+            "filename": "page_29_122.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_122.jpeg",
+            "index": 122
+          },
+          {
+            "filename": "page_29_123.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_123.jpeg",
+            "index": 123
+          },
+          {
+            "filename": "page_29_124.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_124.jpeg",
+            "index": 124
+          },
+          {
+            "filename": "page_29_125.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_125.jpeg",
+            "index": 125
+          },
+          {
+            "filename": "page_29_126.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_126.jpeg",
+            "index": 126
+          },
+          {
+            "filename": "page_29_127.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_127.jpeg",
+            "index": 127
+          },
+          {
+            "filename": "page_29_128.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_128.jpeg",
+            "index": 128
+          },
+          {
+            "filename": "page_29_129.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_129.jpeg",
+            "index": 129
+          },
+          {
+            "filename": "page_29_130.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_130.jpeg",
+            "index": 130
+          },
+          {
+            "filename": "page_29_131.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_131.jpeg",
+            "index": 131
+          },
+          {
+            "filename": "page_29_132.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_132.jpeg",
+            "index": 132
+          },
+          {
+            "filename": "page_29_133.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_133.jpeg",
+            "index": 133
+          },
+          {
+            "filename": "page_29_134.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_134.jpeg",
+            "index": 134
+          },
+          {
+            "filename": "page_29_135.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_135.jpeg",
+            "index": 135
+          },
+          {
+            "filename": "page_29_136.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_136.jpeg",
+            "index": 136
+          },
+          {
+            "filename": "page_29_137.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_137.jpeg",
+            "index": 137
+          },
+          {
+            "filename": "page_29_138.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_138.jpeg",
+            "index": 138
+          },
+          {
+            "filename": "page_29_139.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_139.jpeg",
+            "index": 139
+          },
+          {
+            "filename": "page_29_140.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_140.jpeg",
+            "index": 140
+          },
+          {
+            "filename": "page_29_141.png",
+            "url": "/extracted/images/owner-manual/page_29_141.png",
+            "index": 141
+          },
+          {
+            "filename": "page_29_142.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_142.jpeg",
+            "index": 142
+          },
+          {
+            "filename": "page_29_143.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_143.jpeg",
+            "index": 143
+          },
+          {
+            "filename": "page_29_144.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_144.jpeg",
+            "index": 144
+          },
+          {
+            "filename": "page_29_145.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_145.jpeg",
+            "index": 145
+          },
+          {
+            "filename": "page_29_146.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_146.jpeg",
+            "index": 146
+          },
+          {
+            "filename": "page_29_147.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_147.jpeg",
+            "index": 147
+          },
+          {
+            "filename": "page_29_148.jpeg",
+            "url": "/extracted/images/owner-manual/page_29_148.jpeg",
+            "index": 148
+          }
+        ],
+        "keywords": [
+          "duty cycle",
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 29 For technical questions, please call 1-800-444-3353. Item 57812  SaFety Welding tipS Maintenance tig / Stick cOntROlS WiRe  Duty Cycle (Durati..."
+      },
+      {
+        "page_number": 30,
+        "text_file": "/extracted/text/owner-manual/page_30.md",
+        "images": [
+          {
+            "filename": "page_30_1.png",
+            "url": "/extracted/images/owner-manual/page_30_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_30_2.png",
+            "url": "/extracted/images/owner-manual/page_30_2.png",
+            "index": 2
+          },
+          {
+            "filename": "page_30_3.png",
+            "url": "/extracted/images/owner-manual/page_30_3.png",
+            "index": 3
+          },
+          {
+            "filename": "page_30_4.png",
+            "url": "/extracted/images/owner-manual/page_30_4.png",
+            "index": 4
+          }
+        ],
+        "keywords": [
+          "schematics",
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 30 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE TIG Welding TO PRE..."
+      },
+      {
+        "page_number": 31,
+        "text_file": "/extracted/text/owner-manual/page_31.md",
+        "images": [
+          {
+            "filename": "page_31_1.png",
+            "url": "/extracted/images/owner-manual/page_31_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_31_2.png",
+            "url": "/extracted/images/owner-manual/page_31_2.png",
+            "index": 2
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 31 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire d.\t Optional Setti..."
+      },
+      {
+        "page_number": 32,
+        "text_file": "/extracted/text/owner-manual/page_32.md",
+        "images": [
+          {
+            "filename": "page_32_1.png",
+            "url": "/extracted/images/owner-manual/page_32_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_32_2.png",
+            "url": "/extracted/images/owner-manual/page_32_2.png",
+            "index": 2
+          },
+          {
+            "filename": "page_32_3.png",
+            "url": "/extracted/images/owner-manual/page_32_3.png",
+            "index": 3
+          },
+          {
+            "filename": "page_32_4.png",
+            "url": "/extracted/images/owner-manual/page_32_4.png",
+            "index": 4
+          },
+          {
+            "filename": "page_32_5.png",
+            "url": "/extracted/images/owner-manual/page_32_5.png",
+            "index": 5
+          }
+        ],
+        "keywords": [
+          "schematics",
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 32 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Stick Welding TO P..."
+      },
+      {
+        "page_number": 33,
+        "text_file": "/extracted/text/owner-manual/page_33.md",
+        "images": [
+          {
+            "filename": "page_33_1.png",
+            "url": "/extracted/images/owner-manual/page_33_1.png",
+            "index": 1
+          },
+          {
+            "filename": "page_33_2.png",
+            "url": "/extracted/images/owner-manual/page_33_2.png",
+            "index": 2
+          },
+          {
+            "filename": "page_33_3.png",
+            "url": "/extracted/images/owner-manual/page_33_3.png",
+            "index": 3
+          },
+          {
+            "filename": "page_33_4.png",
+            "url": "/extracted/images/owner-manual/page_33_4.png",
+            "index": 4
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 33 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire e.\t Optional Setti..."
+      },
+      {
+        "page_number": 34,
+        "text_file": "/extracted/text/owner-manual/page_34.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick",
+          "flux-cored"
+        ],
+        "preview_snippet": "Page 34 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Welding Tips A goo..."
+      },
+      {
+        "page_number": 35,
+        "text_file": "/extracted/text/owner-manual/page_35.md",
+        "images": [
+          {
+            "filename": "page_35_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_35_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_2.jpeg",
+            "index": 2
+          },
+          {
+            "filename": "page_35_3.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_3.jpeg",
+            "index": 3
+          },
+          {
+            "filename": "page_35_4.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_4.jpeg",
+            "index": 4
+          },
+          {
+            "filename": "page_35_5.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_5.jpeg",
+            "index": 5
+          },
+          {
+            "filename": "page_35_6.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_6.jpeg",
+            "index": 6
+          },
+          {
+            "filename": "page_35_7.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_7.jpeg",
+            "index": 7
+          },
+          {
+            "filename": "page_35_8.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_8.jpeg",
+            "index": 8
+          },
+          {
+            "filename": "page_35_9.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_9.jpeg",
+            "index": 9
+          },
+          {
+            "filename": "page_35_10.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_10.jpeg",
+            "index": 10
+          },
+          {
+            "filename": "page_35_11.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_11.jpeg",
+            "index": 11
+          },
+          {
+            "filename": "page_35_12.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_12.jpeg",
+            "index": 12
+          },
+          {
+            "filename": "page_35_13.jpeg",
+            "url": "/extracted/images/owner-manual/page_35_13.jpeg",
+            "index": 13
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 35 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Wire Weld Diagnosi..."
+      },
+      {
+        "page_number": 36,
+        "text_file": "/extracted/text/owner-manual/page_36.md",
+        "images": [
+          {
+            "filename": "page_36_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_36_1.jpeg",
+            "index": 1
+          }
+        ],
+        "keywords": [
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 36 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Wire Weld Penetrat..."
+      },
+      {
+        "page_number": 37,
+        "text_file": "/extracted/text/owner-manual/page_37.md",
+        "images": [
+          {
+            "filename": "page_37_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_37_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_37_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_37_2.jpeg",
+            "index": 2
+          },
+          {
+            "filename": "page_37_3.jpeg",
+            "url": "/extracted/images/owner-manual/page_37_3.jpeg",
+            "index": 3
+          },
+          {
+            "filename": "page_37_4.jpeg",
+            "url": "/extracted/images/owner-manual/page_37_4.jpeg",
+            "index": 4
+          }
+        ],
+        "keywords": [
+          "polarity",
+          "troubleshooting",
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 37 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Wire Weld\u200a\u2013\u200aBurn-T..."
+      },
+      {
+        "page_number": 38,
+        "text_file": "/extracted/text/owner-manual/page_38.md",
+        "images": [
+          {
+            "filename": "page_38_1.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_38_2.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_2.jpeg",
+            "index": 2
+          },
+          {
+            "filename": "page_38_3.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_3.jpeg",
+            "index": 3
+          },
+          {
+            "filename": "page_38_4.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_4.jpeg",
+            "index": 4
+          },
+          {
+            "filename": "page_38_5.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_5.jpeg",
+            "index": 5
+          },
+          {
+            "filename": "page_38_6.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_6.jpeg",
+            "index": 6
+          },
+          {
+            "filename": "page_38_7.jpeg",
+            "url": "/extracted/images/owner-manual/page_38_7.jpeg",
+            "index": 7
+          }
+        ],
+        "keywords": [
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 38 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Stick Weld Diagnos..."
+      },
+      {
+        "page_number": 39,
+        "text_file": "/extracted/text/owner-manual/page_39.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 39 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Stick Weld Penetra..."
+      },
+      {
+        "page_number": 40,
+        "text_file": "/extracted/text/owner-manual/page_40.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "troubleshooting",
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 40 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Stick Weld\u200a\u2013\u200aCoat ..."
+      },
+      {
+        "page_number": 41,
+        "text_file": "/extracted/text/owner-manual/page_41.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored"
+        ],
+        "preview_snippet": "Page 41 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Maintenance TO PRE..."
+      },
+      {
+        "page_number": 42,
+        "text_file": "/extracted/text/owner-manual/page_42.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "troubleshooting",
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 42 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Troubleshooting\u200a\u2013\u200a..."
+      },
+      {
+        "page_number": 43,
+        "text_file": "/extracted/text/owner-manual/page_43.md",
+        "images": [],
+        "keywords": [
+          "duty cycle",
+          "schematics",
+          "polarity",
+          "troubleshooting",
+          "mig",
+          "tig",
+          "stick",
+          "flux-cored",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 43 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Problem Possible C..."
+      },
+      {
+        "page_number": 44,
+        "text_file": "/extracted/text/owner-manual/page_44.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "polarity",
+          "troubleshooting",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 44 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Troubleshooting\u200a\u2013\u200a..."
+      },
+      {
+        "page_number": 45,
+        "text_file": "/extracted/text/owner-manual/page_45.md",
+        "images": [],
+        "keywords": [
+          "schematics",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 45 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Wiring Schematic A..."
+      },
+      {
+        "page_number": 46,
+        "text_file": "/extracted/text/owner-manual/page_46.md",
+        "images": [],
+        "keywords": [
+          "polarity",
+          "mig",
+          "tig",
+          "stick",
+          "wire-feed"
+        ],
+        "preview_snippet": "Page 46 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips TIG / Stick CONTROLS Wire MAINTENANCE Part Description Q..."
+      },
+      {
+        "page_number": 47,
+        "text_file": "/extracted/text/owner-manual/page_47.md",
+        "images": [],
+        "keywords": [
+          "tig",
+          "stick"
+        ],
+        "preview_snippet": "Page 47 For technical questions, please call 1-800-444-3353. Item 57812   Safety Welding Tips MAINTENANCE TIG / Stick CONTROLS Wire Assembly Diagram 1..."
+      },
+      {
+        "page_number": 48,
+        "text_file": "/extracted/text/owner-manual/page_48.md",
+        "images": [],
+        "keywords": [],
+        "preview_snippet": "\u00ae 26677 Agoura Road  \u2022  Calabasas, CA 91302  \u2022  1-800-444-3353 Limited 90 Day Warranty Harbor Freight Tools Co. makes every effort to assure that its ..."
+      }
+    ]
+  },
+  "quick-start-guide": {
+    "title": "Quick Start Guide",
+    "path": "files/quick-start-guide.pdf",
+    "pages": [
+      {
+        "page_number": 1,
+        "text_file": "/extracted/text/quick-start-guide/page_1.md",
+        "images": [
+          {
+            "filename": "page_1_1.jpeg",
+            "url": "/extracted/images/quick-start-guide/page_1_1.jpeg",
+            "index": 1
+          },
+          {
+            "filename": "page_1_2.png",
+            "url": "/extracted/images/quick-start-guide/page_1_2.png",
+            "index": 2
+          }
+        ],
+        "keywords": [
+          "wire-feed"
+        ],
+        "preview_snippet": "BASIC WELDING INSTRUCTIONS AND WELDING TIPS ARE IN MANUAL. 2\u2033 Contact Tip Nozzle HOLD  GUN  CLEAR WARNING To prevent serious  injury, read  manual war..."
+      },
+      {
+        "page_number": 2,
+        "text_file": "/extracted/text/quick-start-guide/page_2.md",
+        "images": [],
+        "keywords": [],
+        "preview_snippet": "BASIC WELDING INSTRUCTIONS AND WELDING TIPS ARE IN MANUAL. \u00ae..."
+      }
+    ]
+  },
+  "selection-chart": {
+    "title": "Selection Chart",
+    "path": "files/selection-chart.pdf",
+    "pages": [
+      {
+        "page_number": 1,
+        "text_file": "/extracted/text/selection-chart/page_1.md",
+        "images": [
+          {
+            "filename": "page_1_1.jpeg",
+            "url": "/extracted/images/selection-chart/page_1_1.jpeg",
+            "index": 1
+          }
+        ],
+        "keywords": [],
+        "preview_snippet": "..."
+      }
+    ]
+  }
+}
