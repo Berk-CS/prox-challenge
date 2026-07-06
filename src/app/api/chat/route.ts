@@ -34,7 +34,7 @@ CRITICAL DIRECTIONS:
      </antArtifact>
    - Supported Types:
      - React Component ("application/vnd.ant.react"): Use this for interactive widgets like a Duty Cycle Calculator, a settings configurator, or a wiring selector. Use Tailwind classes for styling (no arbitrary values). Do not include React imports; they are pre-configured. Use a default export.
-     - Mermaid Diagram ("application/vnd.ant.mermaid"): Use for troubleshooting flowcharts or decision trees.
+     - Mermaid Diagram ("application/vnd.ant.mermaid"): Use for troubleshooting flowcharts or decision trees. CRITICAL: In Mermaid diagrams, you MUST ALWAYS wrap node labels in double quotes if they contain special characters, math symbols (≤), or brackets (e.g. write \`E["CTWD ≤ 1/2 inch"]\`). DO NOT use nested double-quotes (") inside node labels; instead, write out units (like 'inch') or use single quotes to prevent syntax crashes.
      - SVG Diagram ("image/svg+xml"): Use for quick custom visual illustrations, e.g. drawing welding joint designs or sockets wiring.
      - HTML/CSS/JS ("text/html"): For rich sandboxed custom panels. Use placeholder layouts if needed.
      - Markdown document ("text/markdown") or code snippets ("application/vnd.ant.code").
