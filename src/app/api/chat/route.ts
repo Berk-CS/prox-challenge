@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
             options: {
               cwd: process.cwd(),
               model: "claude-5-sonnet",
+              cache_control: { type: "ephemeral" },
               agent: "vulcan-expert",
               agents: {
                 "vulcan-expert": {
