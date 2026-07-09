@@ -5,9 +5,8 @@ import * as path from "path";
 
 export const dynamic = "force-dynamic";
 
-// Model definition: we default to gpt-4o-mini for ultra-low latency and cost.
-// If higher-level technical reasoning is desired, it can be changed to "gpt-4o".
-const OPENAI_MODEL = "gpt-4o";
+
+const OPENAI_MODEL = "gpt-5.4-mini";
 
 // Tool schemas for the OpenAI Chat Completions API
 const tools = [
