@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // Model definition: we default to gpt-4o-mini for ultra-low latency and cost.
 // If higher-level technical reasoning is desired, it can be changed to "gpt-4o".
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-4o";
 
 // Tool schemas for the OpenAI Chat Completions API
 const tools = [
@@ -86,29 +86,29 @@ interface GrepMatch {
 function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
   const matches: GrepMatch[] = [];
   const textDir = path.join(process.cwd(), "public", "extracted", "text");
-  
-  const sources = sourceFilter 
-    ? [sourceFilter] 
+
+  const sources = sourceFilter
+    ? [sourceFilter]
     : ["owner-manual", "quick-start-guide", "selection-chart"];
-  
+
   const lowerQuery = query.toLowerCase();
-  
+
   for (const src of sources) {
     const srcDir = path.join(textDir, src);
     if (!fs.existsSync(srcDir)) continue;
-    
+
     const files = fs.readdirSync(srcDir);
     for (const file of files) {
       if (!file.endsWith(".md")) continue;
-      
+
       const matchPage = file.match(/page_(\d+)\.md/);
       if (!matchPage) continue;
       const pageNum = parseInt(matchPage[1], 10);
-      
+
       const filePath = path.join(srcDir, file);
       const content = fs.readFileSync(filePath, "utf-8");
       const lines = content.split("\n");
-      
+
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].toLowerCase().includes(lowerQuery)) {
           matches.push({
@@ -117,7 +117,7 @@ function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
             lineNum: i + 1,
             lineContent: lines[i].trim()
           });
-          
+
           if (matches.length >= 30) {
             return matches;
           }
@@ -163,18 +163,31 @@ CRITICAL PROCESS FOR RECOVERING MANUAL CONTENT:
 3. If the index does not help or your search is too specific, use the "grep" tool to find word matches across the manual pages.
 4. Cite your sources in your final response: use [Owner's Manual p. XX], [Quick Start Guide p. XX], or [Selection Chart p. XX] format.
 
-MULTIMODAL RESPONSES (ARTIFACTS):
-- You can create and reference artifacts. Artifacts are self-contained, interactive or visual blocks displayed alongside the chat.
-- To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
-  <antArtifact identifier="unique-id" type="MIME-TYPE" title="Title">
-    [content]
-  </antArtifact>
-- Supported Types:
-  - React Component ("application/vnd.ant.react"): Use this for interactive widgets like a Duty Cycle Calculator, a settings configurator, or a wiring selector. Use Tailwind classes for styling (no arbitrary values). Do not include React imports; they are pre-configured. Use a default export.
-  - Mermaid Diagram ("application/vnd.ant.mermaid"): Use for troubleshooting flowcharts. Node labels with special characters must be double-quoted (e.g. write \`E["CTWD <= 1/2 inch"]\`).
-  - SVG Diagram ("image/svg+xml"): Use for quick custom visual illustrations, e.g. drawing welding joint designs or sockets wiring.
-  - HTML/CSS/JS ("text/html"): For rich sandboxed custom preview pages.
-  - Markdown document ("text/markdown") or code snippets ("application/vnd.ant.code").
+REAL-TIME DIAGRAMS, PROGRAMMATIC SCHEMATICS & INTERACTIVE CONTENT (ARTIFACTS):
+- You must proactively decide when a visual is appropriate and generate it.
+- Render artifacts in your response to present code-generated visualizations, interactive tools, flowcharts, or diagrams.
+- Write your text response first, and then append the artifact block at the very end of your response.
+- CRITICAL: The pre-extracted manual image files are incomplete and must NOT be used. Do not include any HTML <img> tags pointing to '/extracted/images/'. Instead, you MUST generate all diagrams, schematics, and layouts programmatically using code.
+
+1. GENERATING PROGRAMMATIC DIAGRAMS & SCHEMATICS (SVG / React):
+   When the user asks for a control layout, a wire loader setup, joint designs, or socket polarity connections, you should draw it programmatically inside an artifact:
+   - For simple layouts/schematics: Use the SVG Diagram ("image/svg+xml") type to draw vector graphics (e.g. circles, lines, rectangles, paths) showing wire spool components, front panel knob positions, or joint geometries.
+   - For sockets polarity wiring: Use the React Component type to show a beautiful interactive mock of the welder's front panel sockets (+ and - terminals) with cables (ground clamp vs electrode holder/gun) dynamically plugged in based on the selected configuration.
+
+2. GENERATING INTERACTIVE WIDGETS (React Components):
+   Write custom React components to create interactive tools for complex math or setups:
+   - Polarity Socket wiring: For process setup questions, create an interactive React component that displays the sockets (+ and - terminals) and wires/cables plug-in locations based on the selected process (MIG Solid-core DCEP vs MIG Flux-core DCEN vs Stick vs TIG).
+   - Duty Cycle Calculator: For duty cycle queries, write a React component calculator. It should take process and input amperage, and calculate: duty cycle %, weld time (min), rest time (min), and include a startable rest countdown timer widget.
+   - Settings Configurator: For voltage/wire speed queries, write a React component settings configurator. Let the user select process, material type, wire size, and thickness, and instantly print the recommended wire feed speed, voltage, polarity setup, and gas choice.
+   Constraint: Use Tailwind CSS classes for styling. Do not include React imports; they are pre-configured. Use a default export.
+
+3. TROUBLESHOOTING FLOWCHARTS (Mermaid Diagrams):
+   Use Mermaid diagram artifacts for step-by-step defect troubleshooting. Remember to quote special characters in node labels: 'E["CTWD <= 1/2 inch"]'.
+
+To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
+<antArtifact identifier="unique-id" type="MIME-TYPE" title="Title">
+  [content]
+</antArtifact>
 `;
 
     // Set up SSE Stream headers
@@ -187,7 +200,9 @@ MULTIMODAL RESPONSES (ARTIFACTS):
 
         try {
           const client = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY
+            apiKey: process.env.OPENAI_API_KEY,
+            timeout: 60 * 1000, // 60 seconds timeout
+            maxRetries: 3       // automatically retry up to 3 times
           });
 
           // Formulate full message history
@@ -209,10 +224,10 @@ MULTIMODAL RESPONSES (ARTIFACTS):
 
             // Send LLM turn start log to client
             const lastMsg = apiMessages.filter(m => m.role === "user").pop();
-            const turnInput = lastMsg 
+            const turnInput = lastMsg
               ? `Prompting ${OPENAI_MODEL} with context (last query: "${lastMsg.content.slice(0, 100)}...") [Messages History Length: ${apiMessages.length}]`
               : `Prompting ${OPENAI_MODEL} (Turn ${iterations}) [Messages History Length: ${apiMessages.length}]`;
-            
+
             sendEvent({
               type: "llm_turn",
               id: `llm-turn-${iterations}`,
@@ -277,10 +292,10 @@ MULTIMODAL RESPONSES (ARTIFACTS):
             const toolCalls = toolCallsAccumulator.filter(tc => tc !== undefined && tc.name !== "");
 
             // Send LLM completion turn summary
-            const summaryText = assistantText 
-              ? assistantText 
+            const summaryText = assistantText
+              ? assistantText
               : (toolCalls.length ? `[Requested tool calls: ${toolCalls.map(tc => tc.name).join(", ")}]` : "[No content returned]");
-            
+
             sendEvent({
               type: "llm_turn_summary",
               id: `llm-turn-${iterations}`,

@@ -433,7 +433,7 @@ export default function Home() {
       if (hasChanges) {
         setArtifacts(found);
         const lastKey = currentKeys[currentKeys.length - 1];
-        if (lastKey && activeArtifactId !== lastKey) {
+        if (lastKey) {
           setActiveArtifactId(lastKey);
           setActiveRightTab("preview");
         }
