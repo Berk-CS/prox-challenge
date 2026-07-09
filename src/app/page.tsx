@@ -408,7 +408,7 @@ export default function Home() {
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
   
   // Tab State
-  const [activeRightTab, setActiveRightTab] = useState<"preview" | "manual">("preview");
+  const [activeTab, setActiveTab] = useState<"chat" | "preview" | "manual">("chat");
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
   
   // Artifacts State
@@ -551,7 +551,7 @@ export default function Home() {
         const lastKey = currentKeys[currentKeys.length - 1];
         if (lastKey) {
           setActiveArtifactId(lastKey);
-          setActiveRightTab("preview");
+          setActiveTab("preview");
         }
       }
     }
@@ -709,7 +709,7 @@ export default function Home() {
                 if (pages && Array.isArray(pages) && pages.length > 0) {
                   setSelectedPage(pages[0]);
                 }
-                setActiveRightTab("manual");
+                setActiveTab("manual");
               }
 
               const newLog: ToolLog = {
@@ -812,6 +812,198 @@ Please analyze this error, fix your code, and output the entire corrected React 
     }
   }, [isLoading, retryCount, handleSend]);
 
+  const renderChatContent = (isSidebar = false) => {
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-2">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
+              <div className="flex items-center space-x-2 text-[10px] text-gray-500 mb-1 font-mono uppercase">
+                <span>{msg.role}</span>
+                <span>•</span>
+                <span>{msg.timestamp}</span>
+              </div>
+              
+              {msg.role === "system" ? (
+                <div className="w-full rounded border border-success/20 bg-success/5 p-3 font-mono text-xs text-success/90">
+                  {msg.text}
+                </div>
+              ) : (
+                <div
+                  className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-accent/10 border border-accent/20 text-foreground whitespace-pre-wrap text-xs"
+                      : "bg-surface border border-border text-gray-100 w-full"
+                  }`}
+                >
+                  {/* Render tool logs first if role is assistant */}
+                  {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && (
+                    isDeveloperMode ? (
+                      <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
+                        <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
+                          <Cpu className="h-3.5 w-3.5" />
+                          <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
+                        </div>
+                        <div className="space-y-2">
+                          {msg.toolLogs.map((log) => {
+                            const isExpanded = !!expandedLogs[log.id];
+                            return (
+                              <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
+                                <div
+                                  onClick={() => {
+                                    setExpandedLogs((prev) => ({
+                                      ...prev,
+                                      [log.id]: !prev[log.id]
+                                    }));
+                                  }}
+                                  className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                                >
+                                  <div className="flex items-start space-x-2">
+                                    <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
+                                    <span className="font-mono text-[10.5px]">
+                                      {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
+                                      {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
+                                      {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
+                                      <span className="text-primary font-bold">{log.toolName}</span>
+                                      {log.resultSummary && (
+                                        <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="text-gray-500 pl-2">
+                                    {isExpanded ? (
+                                      <LucideIcons.ChevronDown className="h-3 w-3 inline" />
+                                    ) : (
+                                      <LucideIcons.ChevronRight className="h-3 w-3 inline" />
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Collapsible Details Drawer */}
+                                {isExpanded && (
+                                  <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
+                                    <div>
+                                      <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                        {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                                      </span>
+                                      <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
+                                        {typeof log.arguments === "string"
+                                          ? log.arguments
+                                          : JSON.stringify(log.arguments, null, 2)}
+                                      </pre>
+                                    </div>
+                                    {log.rawOutput && (
+                                      <div>
+                                        <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                          {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
+                                        </span>
+                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
+                                          {log.rawOutput}
+                                        </pre>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mb-3 rounded border border-border/20 bg-black/10 p-2.5 font-mono text-[10.5px] text-gray-400 space-y-1.5 select-none w-full">
+                        <div className="flex items-center space-x-1.5 text-primary/80 font-bold uppercase tracking-wider text-[9px] border-b border-border/10 pb-1 mb-1">
+                          <Cpu className="h-3 w-3" />
+                          <span>Assistant Process Log</span>
+                        </div>
+                        <div className="space-y-1 text-[10px]">
+                          {msg.toolLogs.map((log) => {
+                            let description = "Processing turn...";
+                            if (log.toolName === "read_pages") {
+                              description = "Checking welder reference guide and instruction pages.";
+                            } else if (log.toolName === "grep") {
+                              description = "Searching welder documentation database.";
+                            } else if (log.toolName.includes("LLM Completion")) {
+                              description = "Formulating parameter adjustments and generating layouts.";
+                            }
+                            return (
+                              <div key={log.id} className="flex items-center space-x-1.5">
+                                <span className="h-1 w-1 rounded-full bg-accent" />
+                                <span>{description}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
+                  )}
+
+                  {msg.role === "assistant" ? (
+                    <MarkdownRenderer
+                      content={msg.text
+                        .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
+                          const titleMatch = m.match(/title="([^"]+)"/);
+                          const title = titleMatch ? titleMatch[1] : "Interactive Tool";
+                          return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
+                        })
+                        .replace(/<antArtifact[\s\S]*$/g, (m) => {
+                          const titleMatch = m.match(/title="([^"]+)"/);
+                          const title = titleMatch ? titleMatch[1] : "Interactive Tool";
+                          return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
+                        })
+                      }
+                    />
+                  ) : (
+                    msg.text
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Chat input */}
+        <div className="border-t border-border bg-background py-4 space-y-3">
+          {!isSidebar && (
+            <div className="flex">
+              <button
+                type="button"
+                onClick={() => setInput("generate interactive content: a duty cycle calculator")}
+                className="flex items-center space-x-1.5 px-2.5 py-1 text-[11px] font-mono text-primary/80 hover:text-primary bg-black/40 border border-border hover:border-primary/40 rounded transition-all cursor-pointer select-none"
+              >
+                <LucideIcons.Sparkles className="h-3.5 w-3.5 text-accent" />
+                <span>Try: "generate interactive content: a duty cycle calculator"</span>
+              </button>
+            </div>
+          )}
+          <div className="flex items-center space-x-2 rounded border border-border bg-black/45 px-3 py-2 focus-within:border-primary transition-all">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={isSidebar ? "Ask assistant..." : "Ask about duty cycle parameters, wire speed calibration, polarity sockets..."}
+              rows={1}
+              className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600"
+            />
+            <button
+              onClick={() => handleSend()}
+              disabled={isLoading || !input.trim()}
+              className="rounded bg-primary p-2 text-background hover:bg-primary-hover disabled:bg-border disabled:text-gray-600 transition-colors"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const activeArtifact = activeArtifactId ? artifacts[activeArtifactId] : null;
   const isArtifactClosed = activeArtifact && messages.find(m => m.role === 'assistant' && m.text.includes(`</antArtifact>`));
 
@@ -898,447 +1090,288 @@ Please analyze this error, fix your code, and output the entire corrected React 
         </div>
       </header>
 
-      {/* Main Workspace Panels */}
-      <main className="flex flex-1 overflow-hidden">
-        {/* Left Panel: Chat Interface */}
-        <section className="flex w-full md:w-[45%] flex-col border-r border-border bg-black/20">
-          <div className="flex h-9 items-center justify-between border-b border-border bg-surface/50 px-4 font-mono text-[10px] text-gray-400">
-            <div className="flex items-center space-x-2">
-              <Terminal className="h-3.5 w-3.5 text-primary" />
-              <span>ASSISTANT CONSOLE</span>
-            </div>
-            {isLoading && (
-              <span className="flex items-center space-x-1 text-accent font-bold">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>CROSS-REFERENCING DOCUMENTS...</span>
-              </span>
-            )}
+      {/* Main Workspace Panel */}
+      <main className="flex h-full flex-col overflow-hidden bg-background">
+        {/* Unified Tab Header Bar */}
+        <div className="flex h-11 items-center justify-between border-b border-border bg-surface/80 px-6">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
+                activeTab === "chat"
+                  ? "bg-primary text-background border-primary font-bold shadow-md"
+                  : "border-transparent text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span>CHAT</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("preview")}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
+                activeTab === "preview"
+                  ? "bg-primary text-background border-primary font-bold shadow-md"
+                  : "border-transparent text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>ARTIFACT</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("manual")}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
+                activeTab === "manual"
+                  ? "bg-primary text-background border-primary font-bold shadow-md"
+                  : "border-transparent text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>MANUAL EXPLORER</span>
+            </button>
           </div>
+        </div>
 
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className="flex items-center space-x-2 text-[10px] text-gray-500 mb-1 font-mono uppercase">
-                  <span>{msg.role}</span>
-                  <span>•</span>
-                  <span>{msg.timestamp}</span>
-                </div>
-                
-                {msg.role === "system" ? (
-                  <div className="w-full rounded border border-success/20 bg-success/5 p-3 font-mono text-xs text-success/90">
-                    {msg.text}
-                  </div>
-                ) : (
-                  <div
-                    className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-accent/10 border border-accent/20 text-foreground whitespace-pre-wrap text-xs"
-                        : "bg-surface border border-border text-gray-100 w-full md:max-w-[85%]"
-                    }`}
-                  >
-                    {/* Render tool logs first if role is assistant */}
-                    {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && (
-                      isDeveloperMode ? (
-                        <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
-                          <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
-                            <Cpu className="h-3.5 w-3.5" />
-                            <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
-                          </div>
-                          <div className="space-y-2">
-                            {msg.toolLogs.map((log) => {
-                              const isExpanded = !!expandedLogs[log.id];
-                              return (
-                                <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
-                                  <div
-                                    onClick={() => {
-                                      setExpandedLogs((prev) => ({
-                                        ...prev,
-                                        [log.id]: !prev[log.id]
-                                      }));
-                                    }}
-                                    className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
-                                  >
-                                    <div className="flex items-start space-x-2">
-                                      <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
-                                      <span className="font-mono text-[10.5px]">
-                                        {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
-                                        {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
-                                        {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
-                                        <span className="text-primary font-bold">{log.toolName}</span>
-                                        {log.resultSummary && (
-                                          <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
-                                        )}
-                                      </span>
-                                    </div>
-                                    <div className="text-gray-500 pl-2">
-                                      {isExpanded ? (
-                                        <LucideIcons.ChevronDown className="h-3 w-3 inline" />
-                                      ) : (
-                                        <LucideIcons.ChevronRight className="h-3 w-3 inline" />
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Collapsible Details Drawer */}
-                                  {isExpanded && (
-                                    <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
-                                      <div>
-                                        <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                          {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
-                                        </span>
-                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
-                                          {typeof log.arguments === "string"
-                                            ? log.arguments
-                                            : JSON.stringify(log.arguments, null, 2)}
-                                        </pre>
-                                      </div>
-                                      {log.rawOutput && (
-                                        <div>
-                                          <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                            {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
-                                          </span>
-                                          <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
-                                            {log.rawOutput}
-                                          </pre>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mb-3 rounded border border-border/20 bg-black/10 p-2.5 font-mono text-[10.5px] text-gray-400 space-y-1.5 select-none w-full">
-                          <div className="flex items-center space-x-1.5 text-primary/80 font-bold uppercase tracking-wider text-[9px] border-b border-border/10 pb-1 mb-1">
-                            <Cpu className="h-3 w-3" />
-                            <span>Assistant Process Log</span>
-                          </div>
-                          <div className="space-y-1 text-[10px]">
-                            {msg.toolLogs.map((log) => {
-                              let description = "Processing turn...";
-                              if (log.toolName === "read_pages") {
-                                description = "Checking welder reference guide and instruction pages.";
-                              } else if (log.toolName === "grep") {
-                                description = "Searching welder documentation database.";
-                              } else if (log.toolName.includes("LLM Completion")) {
-                                description = "Formulating parameter adjustments and generating layouts.";
-                              }
-                              return (
-                                <div key={log.id} className="flex items-center space-x-1.5">
-                                  <span className="h-1 w-1 rounded-full bg-accent" />
-                                  <span>{description}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )
-                    )}
-
-                    {msg.role === "assistant" ? (
-                      <MarkdownRenderer
-                        content={msg.text
-                          .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
-                            const titleMatch = m.match(/title="([^"]+)"/);
-                            const title = titleMatch ? titleMatch[1] : "Interactive Tool";
-                            return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
-                          })
-                          .replace(/<antArtifact[\s\S]*$/g, (m) => {
-                            const titleMatch = m.match(/title="([^"]+)"/);
-                            const title = titleMatch ? titleMatch[1] : "Interactive Tool";
-                            return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
-                          })
-                        }
-                      />
-                    ) : (
-                      msg.text
-                    )}
-                  </div>
-                )}
+        {/* Tab Body Viewports */}
+        <div className="flex-1 flex flex-row overflow-hidden relative">
+          
+          {/* Left/Center Pane: Main view switcher */}
+          <div className="flex-1 flex flex-col overflow-hidden h-full">
+            {/* 1. CHAT TAB */}
+            {activeTab === "chat" && (
+              <div className="h-full flex flex-col max-w-4xl mx-auto w-full px-4 md:px-6">
+                {renderChatContent()}
               </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
+            )}
 
-          {/* Chat input */}
-          <div className="border-t border-border bg-surface p-4 space-y-3">
-            <div className="flex">
-              <button
-                type="button"
-                onClick={() => setInput("generate interactive content: a duty cycle calculator")}
-                className="flex items-center space-x-1.5 px-2.5 py-1 text-[11px] font-mono text-primary/80 hover:text-primary bg-black/40 border border-border hover:border-primary/40 rounded transition-all cursor-pointer select-none"
-              >
-                <LucideIcons.Sparkles className="h-3.5 w-3.5 text-accent" />
-                <span>Try: "generate interactive content: a duty cycle calculator"</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-2 rounded border border-border bg-black/45 px-3 py-2 focus-within:border-primary transition-all">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Ask about duty cycle parameters, wire speed calibration, polarity sockets..."
-                rows={1}
-                className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600"
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={isLoading || !input.trim()}
-                className="rounded bg-primary p-2 text-background hover:bg-primary-hover disabled:bg-border disabled:text-gray-600 transition-colors"
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Right Panel: Artifact Preview and Reference Viewer */}
-        <section className="hidden md:flex flex-1 flex-col bg-surface/30">
-          <div className="flex h-11 items-center justify-between border-b border-border bg-surface/80 px-4">
-            <div className="flex space-x-1">
-              <button
-                onClick={() => setActiveRightTab("preview")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                  activeRightTab === "preview"
-                    ? "bg-primary text-background border-primary font-bold shadow-md"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Layers className="h-3.5 w-3.5" />
-                <span>ARTIFACT</span>
-              </button>
-              <button
-                onClick={() => setActiveRightTab("manual")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                  activeRightTab === "manual"
-                    ? "bg-primary text-background border-primary font-bold shadow-md"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>MANUAL EXPLORER</span>
-              </button>
-              {/* Telemetry tab button removed */}
-            </div>
-          </div>
-
-          {/* Right side body view */}
-          <div className="flex-1 overflow-hidden p-6 flex flex-col">
-            {activeRightTab === "preview" && (
-              <div className="flex-1 flex flex-col rounded border border-border bg-black/60 overflow-hidden">
-                {activeArtifact ? (
-                  <>
-                    <div className="flex h-10 items-center justify-between border-b border-border bg-surface px-4 font-mono text-xs">
-                      <span className="text-gray-300 font-bold uppercase">{activeArtifact.title}</span>
-                      
-                      <div className="flex items-center space-x-2">
-                        <span className="text-[10px] text-gray-600 bg-black/35 px-2 py-0.5 rounded border border-border">
-                          {activeArtifact.type}
-                        </span>
-
-                        <button
-                          onClick={async () => {
-                            if (!activeArtifact) return;
-                            await navigator.clipboard.writeText(activeArtifact.content);
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          className="flex items-center space-x-1 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
-                        >
-                          {copied ? (
-                            <>
-                              <LucideIcons.CheckCircle className="h-3 w-3 text-success animate-pulse" />
-                              <span className="text-success font-bold text-[9px]">Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <LucideIcons.FileText className="h-3 w-3" />
-                              <span className="text-[9px]">Copy Code</span>
-                            </>
-                          )}
-                        </button>
+            {/* 2. ARTIFACT TAB */}
+            {activeTab === "preview" && (
+              <div className="h-full flex-1 overflow-hidden p-6 flex flex-col">
+                <div className="flex-1 flex flex-col rounded border border-border bg-black/60 overflow-hidden">
+                  {activeArtifact ? (
+                    <>
+                      <div className="flex h-10 items-center justify-between border-b border-border bg-surface px-4 font-mono text-xs">
+                        <span className="text-gray-300 font-bold uppercase">{activeArtifact.title}</span>
                         
-                        <div className="flex rounded border border-border overflow-hidden">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[10px] text-gray-600 bg-black/35 px-2 py-0.5 rounded border border-border">
+                            {activeArtifact.type}
+                          </span>
+
                           <button
-                            onClick={() => setPreviewSubTab("view")}
-                            className={`p-1.5 ${previewSubTab === "view" ? "bg-primary text-background" : "bg-black/20 text-gray-400 hover:text-gray-200"}`}
+                            onClick={async () => {
+                              if (!activeArtifact) return;
+                              await navigator.clipboard.writeText(activeArtifact.content);
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                            }}
+                            className="flex items-center space-x-1 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
                           >
-                            <Eye className="h-3.5 w-3.5" />
+                            {copied ? (
+                              <>
+                                <LucideIcons.CheckCircle className="h-3 w-3 text-success animate-pulse" />
+                                <span className="text-success font-bold text-[9px]">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <LucideIcons.FileText className="h-3 w-3" />
+                                <span className="text-[9px]">Copy Code</span>
+                              </>
+                            )}
                           </button>
-                          <button
-                            onClick={() => setPreviewSubTab("code")}
-                            className={`p-1.5 ${previewSubTab === "code" ? "bg-primary text-background" : "bg-black/20 text-gray-400 hover:text-gray-200"}`}
-                          >
-                            <Code className="h-3.5 w-3.5" />
-                          </button>
+                          
+                          <div className="flex rounded border border-border overflow-hidden">
+                            <button
+                              onClick={() => setPreviewSubTab("view")}
+                              className={`p-1.5 ${previewSubTab === "view" ? "bg-primary text-background" : "bg-black/20 text-gray-400 hover:text-gray-200"}`}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setPreviewSubTab("code")}
+                              className={`p-1.5 ${previewSubTab === "code" ? "bg-primary text-background" : "bg-black/20 text-gray-400 hover:text-gray-200"}`}
+                            >
+                              <Code className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex-1 overflow-auto p-4 bg-black/20">
-                      {previewSubTab === "code" ? (
-                        <textarea
-                          value={localCode}
-                          onChange={(e) => {
-                            setLocalCode(e.target.value);
-                            debouncedUpdateArtifact(e.target.value);
-                          }}
-                          className="w-full min-h-[500px] flex-1 font-mono text-xs text-primary bg-black/35 p-3 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
-                        />
-                      ) : (
-                        <div className="h-full">
-                          {/* Live render condition */}
-                          {isLoading ? (
-                            <div className="flex flex-col h-full text-gray-500 font-mono">
-                              <div className="flex items-center space-x-2 mb-3 text-xs uppercase tracking-wider border-b border-border pb-2 text-gray-400 select-none">
-                                <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                                <span>Streaming Component Payload...</span>
-                              </div>
-                              <pre className="flex-1 w-full p-3 bg-surface border border-border rounded text-left text-[11px] text-gray-300 overflow-auto whitespace-pre-wrap font-mono leading-relaxed max-h-[450px]">
-                                <code>{activeArtifact.content}</code>
-                              </pre>
-                            </div>
-                          ) : (
-                            retryCount >= 2 && sandboxError ? (
-                              <div className="p-6 bg-error/10 border border-error/20 rounded text-center max-w-md mx-auto space-y-4 my-12">
-                                <AlertTriangle className="h-10 w-10 text-error mx-auto animate-bounce" />
-                                <h3 className="text-xs font-black uppercase text-error tracking-wider font-mono">Workspace Component Failure</h3>
-                                <p className="text-xs text-gray-300 leading-relaxed">
-                                  The welder assistant was unable to render this interactive component after multiple automatic self-correction attempts.
-                                </p>
-                                {isDeveloperMode ? (
-                                  <>
-                                    <div className="bg-black/40 border border-border p-3 rounded font-mono text-[10px] text-left text-error overflow-auto max-h-32">
-                                      {sandboxError}
-                                    </div>
-                                    <p className="text-[10px] text-gray-500 font-mono">
-                                      You can manually inspect or correct the code in the [Code] tab.
-                                    </p>
-                                  </>
-                                ) : (
-                                  <p className="text-xs text-error/80 font-medium font-sans">
-                                    An internal setup error prevented this widget from launching.
-                                  </p>
-                                )}
+                      
+                      <div className="flex-1 overflow-auto p-4 bg-black/20">
+                        {previewSubTab === "code" ? (
+                          <textarea
+                            value={localCode}
+                            onChange={(e) => {
+                              setLocalCode(e.target.value);
+                              debouncedUpdateArtifact(e.target.value);
+                            }}
+                            className="w-full min-h-[500px] flex-1 font-mono text-xs text-primary bg-black/35 p-3 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
+                          />
+                        ) : (
+                          <div className="h-full">
+                            {/* Live render condition */}
+                            {isLoading ? (
+                              <div className="flex flex-col h-full text-gray-500 font-mono p-4 overflow-auto">
+                                <div className="flex items-center space-x-2 mb-3 text-xs uppercase tracking-wider border-b border-border pb-2 text-gray-400 select-none">
+                                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                                  <span>Streaming Component Payload...</span>
+                                </div>
+                                <pre className="flex-1 w-full p-3 bg-surface border border-border rounded text-left text-[11px] text-gray-300 overflow-auto whitespace-pre-wrap font-mono leading-relaxed max-h-[450px]">
+                                  <code>{activeArtifact.content}</code>
+                                </pre>
                               </div>
                             ) : (
-                              <div className="space-y-4">
-                                {/* Dispatcher by type */}
-                                {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
-                                  <SandpackSandbox 
-                                    key={activeArtifact.id}
-                                    code={activeArtifact.content} 
-                                    onError={handleAutoRetry} 
-                                    onSuccess={handleSandboxSuccess} 
-                                    isLoading={isLoading} 
-                                  />
-                                )}
-                                
-                                {activeArtifact.type.toLowerCase().includes("mermaid") && (
-                                  <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
-                                )}
-                                
-                                {activeArtifact.type.toLowerCase().includes("svg") && (
-                                  <SvgSandbox content={activeArtifact.content} />
-                                )}
-                                
-                                {activeArtifact.type.toLowerCase().includes("html") && (
-                                  <HtmlSandbox content={activeArtifact.content} />
-                                )}
-                                
-                                {activeArtifact.type.toLowerCase().includes("markdown") && (
-                                  <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
-                                    {activeArtifact.content}
-                                  </div>
-                                )}
-                                
-                                {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
-                                  <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
-                                    <code>{activeArtifact.content}</code>
-                                  </pre>
-                                )}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      )}
+                              retryCount >= 2 && sandboxError ? (
+                                <div className="p-6 bg-error/10 border border-error/20 rounded text-center max-w-md mx-auto space-y-4 my-12 overflow-auto">
+                                  <AlertTriangle className="h-10 w-10 text-error mx-auto animate-bounce" />
+                                  <h3 className="text-xs font-black uppercase text-error tracking-wider font-mono">Workspace Component Failure</h3>
+                                  <p className="text-xs text-gray-300 leading-relaxed">
+                                    The welder assistant was unable to render this interactive component after multiple automatic self-correction attempts.
+                                  </p>
+                                  {isDeveloperMode ? (
+                                    <>
+                                      <div className="bg-black/40 border border-border p-3 rounded font-mono text-[10px] text-left text-error overflow-auto max-h-32">
+                                        {sandboxError}
+                                      </div>
+                                      <p className="text-[10px] text-gray-500 font-mono">
+                                        You can manually inspect or correct the code in the [Code] tab.
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <p className="text-xs text-error/80 font-medium font-sans">
+                                      An internal setup error prevented this widget from launching.
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  {/* Dispatcher by type */}
+                                  {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
+                                    <SandpackSandbox 
+                                      key={activeArtifact.id}
+                                      code={activeArtifact.content} 
+                                      onError={handleAutoRetry} 
+                                      onSuccess={handleSandboxSuccess} 
+                                      isLoading={isLoading} 
+                                    />
+                                  )}
+                                  
+                                  {activeArtifact.type.toLowerCase().includes("mermaid") && (
+                                    <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
+                                  )}
+                                  
+                                  {activeArtifact.type.toLowerCase().includes("svg") && (
+                                    <SvgSandbox content={activeArtifact.content} />
+                                  )}
+                                  
+                                  {activeArtifact.type.toLowerCase().includes("html") && (
+                                    <HtmlSandbox content={activeArtifact.content} />
+                                  )}
+                                  
+                                  {activeArtifact.type.toLowerCase().includes("markdown") && (
+                                    <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
+                                      {activeArtifact.content}
+                                    </div>
+                                  )}
+                                  
+                                  {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
+                                    <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
+                                      <code>{activeArtifact.content}</code>
+                                    </pre>
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 font-mono">
+                      <Layers className="h-12 w-12 text-gray-700 mb-3" />
+                      <p className="text-sm">NO ACTIVE ARTIFACT MOUNTED</p>
+                      <p className="text-[11px] text-gray-600 mt-1 max-w-xs">
+                        Ask the welder assistant to configure settings, troubleshoot defects, or draw wiring layouts. Rich tools will mount and render in this space.
+                      </p>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 font-mono">
-                    <Layers className="h-12 w-12 text-gray-700 mb-3" />
-                    <p className="text-sm">NO ACTIVE ARTIFACT MOUNTED</p>
-                    <p className="text-[11px] text-gray-600 mt-1 max-w-xs">
-                      Ask the welder assistant to configure settings, troubleshoot defects, or draw wiring layouts. Rich tools will mount and render in this space.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeRightTab === "manual" && (
-              <div className="flex-1 flex flex-col rounded border border-border bg-black/40 overflow-hidden">
-                <div className="flex h-12 items-center justify-between border-b border-border bg-surface px-4 space-x-2">
-                  <select
-                    value={selectedDoc}
-                    onChange={(e) => {
-                      setSelectedDoc(e.target.value);
-                      setSelectedPage(1);
-                    }}
-                    className="flex-1 bg-black/40 border border-border text-xs text-gray-300 px-2 py-1 rounded outline-none"
-                  >
-                    <option value="owner-manual">Owner's Manual (48 pgs)</option>
-                    <option value="quick-start-guide">Quick Start Guide (2 pgs)</option>
-                    <option value="selection-chart">Process Selection Chart (1 pg)</option>
-                  </select>
-
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => setSelectedPage((p) => Math.max(1, p - 1))}
-                      disabled={selectedPage <= 1}
-                      className="px-2 py-1 bg-black/40 hover:bg-black/60 disabled:opacity-40 text-xs rounded border border-border text-gray-400"
-                    >
-                      Prev
-                    </button>
-                    <span className="text-xs text-gray-400 font-mono px-2">
-                      Page {selectedPage}
-                    </span>
-                    <button
-                      onClick={() => setSelectedPage((p) => p + 1)}
-                      disabled={
-                        extractedMetadata && extractedMetadata[selectedDoc]
-                          ? selectedPage >= extractedMetadata[selectedDoc].pages.length
-                          : false
-                      }
-                      className="px-2 py-1 bg-black/40 hover:bg-black/60 disabled:opacity-40 text-xs rounded border border-border text-gray-400"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 bg-white overflow-hidden relative w-full h-full">
-                  <iframe
-                    src={`/extracted/pdf/${selectedDoc}/page_${selectedPage}.pdf#toolbar=0&navpanes=0`}
-                    className="w-full h-full border-0 absolute inset-0"
-                    title={`PDF Viewer - ${selectedDoc} Page ${selectedPage}`}
-                    key={`${selectedDoc}-${selectedPage}`}
-                  />
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Telemetry tab panel body removed */}
+            {/* 3. MANUAL EXPLORER TAB */}
+            {activeTab === "manual" && (
+              <div className="h-full flex-1 overflow-hidden p-6 flex flex-col">
+                <div className="flex-1 flex flex-col rounded border border-border bg-black/40 overflow-hidden">
+                  <div className="flex h-12 items-center justify-between border-b border-border bg-surface px-4 space-x-2">
+                    <select
+                      value={selectedDoc}
+                      onChange={(e) => {
+                        setSelectedDoc(e.target.value);
+                        setSelectedPage(1);
+                      }}
+                      className="flex-1 bg-black/40 border border-border text-xs text-gray-300 px-2 py-1 rounded outline-none"
+                    >
+                      <option value="owner-manual">Owner's Manual (48 pgs)</option>
+                      <option value="quick-start-guide">Quick Start Guide (2 pgs)</option>
+                      <option value="selection-chart">Process Selection Chart (1 pg)</option>
+                    </select>
+
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setSelectedPage((p) => Math.max(1, p - 1))}
+                        disabled={selectedPage <= 1}
+                        className="px-2 py-1 bg-black/40 hover:bg-black/60 disabled:opacity-40 text-xs rounded border border-border text-gray-400"
+                      >
+                        Prev
+                      </button>
+                      <span className="text-xs text-gray-400 font-mono px-2">
+                        Page {selectedPage}
+                      </span>
+                      <button
+                        onClick={() => setSelectedPage((p) => p + 1)}
+                        disabled={
+                          extractedMetadata && extractedMetadata[selectedDoc]
+                            ? selectedPage >= extractedMetadata[selectedDoc].pages.length
+                            : false
+                        }
+                        className="px-2 py-1 bg-black/40 hover:bg-black/60 disabled:opacity-40 text-xs rounded border border-border text-gray-400"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 bg-white overflow-hidden relative w-full h-full">
+                    <iframe
+                      src={`/extracted/pdf/${selectedDoc}/page_${selectedPage}.pdf#toolbar=0&navpanes=0`}
+                      className="w-full h-full border-0 absolute inset-0"
+                      title={`PDF Viewer - ${selectedDoc} Page ${selectedPage}`}
+                      key={`${selectedDoc}-${selectedPage}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </section>
+
+          {/* Right Pane: Chat Sidebar */}
+          {/* Only rendered if activeTab is NOT "chat"! */}
+          {activeTab !== "chat" && (
+            <div className="w-[350px] md:w-[400px] border-l border-border bg-surface/10 flex flex-col h-full font-sans">
+              <div className="flex h-9 items-center justify-between border-b border-border bg-surface/50 px-4 font-mono text-[10px] text-gray-400 select-none">
+                <div className="flex items-center space-x-2">
+                  <Send className="h-3 w-3 text-primary" />
+                  <span>ASSISTANT CHAT</span>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-hidden px-4 flex flex-col bg-black/20 animate-fade-in">
+                {renderChatContent(true /* isSidebar mode */)}
+              </div>
+            </div>
+          )}
+
+        </div>
       </main>
     </div>
   );
