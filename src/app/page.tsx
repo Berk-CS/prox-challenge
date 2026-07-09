@@ -360,7 +360,7 @@ export default function Home() {
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
   
   // Tab State
-  const [activeRightTab, setActiveRightTab] = useState<"preview" | "manual" | "telemetry">("preview");
+  const [activeRightTab, setActiveRightTab] = useState<"preview" | "manual">("preview");
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
   
   // Artifacts State
@@ -370,6 +370,10 @@ export default function Home() {
   // Sandbox retry and error states
   const [retryCount, setRetryCount] = useState<number>(0);
   const [sandboxError, setSandboxError] = useState<string | null>(null);
+
+  // Settings and mode states
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(true);
 
   // Manual viewer state
   const [selectedDoc, setSelectedDoc] = useState<string>("owner-manual");
@@ -749,16 +753,58 @@ Please analyze this error, fix your code, and output the entire corrected React 
 
         <div className="hidden md:block w-36 h-2 hazard-stripes border border-border opacity-40"></div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 relative">
           <div className="flex items-center space-x-2 rounded-full border border-border bg-black/40 px-3 py-1 text-[11px] font-mono">
             <span className={`h-2 w-2 rounded-full ${isLoading ? "bg-accent animate-pulse" : "bg-success"} shadow-md`} />
             <span className="text-gray-400 uppercase tracking-widest text-[9px]">
               {isLoading ? "Analyzing..." : "Ready"}
             </span>
           </div>
-          <button className="text-gray-400 hover:text-primary transition-colors">
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className={`text-gray-400 hover:text-primary transition-colors focus:outline-none ${showSettings ? "text-primary" : ""}`}
+          >
             <Settings className="h-5 w-5" />
           </button>
+
+          {/* Backdrop to close dropdown on click outside */}
+          {showSettings && (
+            <div 
+              className="fixed inset-0 z-40 bg-transparent cursor-default" 
+              onClick={() => setShowSettings(false)} 
+            />
+          )}
+
+          {/* Settings Dropdown */}
+          {showSettings && (
+            <div className="absolute right-0 top-10 z-50 w-52 rounded border border-border bg-surface p-3 shadow-xl font-mono text-xs text-gray-300">
+              <div className="border-b border-border pb-1.5 mb-2 font-bold text-[10px] uppercase text-primary tracking-wider">
+                System Workspace Mode
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center justify-between cursor-pointer py-1 hover:bg-black/20 px-1 rounded transition-colors select-none">
+                  <span>Developer Mode</span>
+                  <input
+                    type="radio"
+                    name="workspace-mode"
+                    checked={isDeveloperMode}
+                    onChange={() => setIsDeveloperMode(true)}
+                    className="accent-primary"
+                  />
+                </label>
+                <label className="flex items-center justify-between cursor-pointer py-1 hover:bg-black/20 px-1 rounded transition-colors select-none">
+                  <span>User Mode</span>
+                  <input
+                    type="radio"
+                    name="workspace-mode"
+                    checked={!isDeveloperMode}
+                    onChange={() => setIsDeveloperMode(false)}
+                    className="accent-primary"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -769,7 +815,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
           <div className="flex h-9 items-center justify-between border-b border-border bg-surface/50 px-4 font-mono text-[10px] text-gray-400">
             <div className="flex items-center space-x-2">
               <Terminal className="h-3.5 w-3.5 text-primary" />
-              <span>COGNITIVE LOGS</span>
+              <span>ASSISTANT CONSOLE</span>
             </div>
             {isLoading && (
               <span className="flex items-center space-x-1 text-accent font-bold">
@@ -803,76 +849,103 @@ Please analyze this error, fix your code, and output the entire corrected React 
                   >
                     {/* Render tool logs first if role is assistant */}
                     {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && (
-                      <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
-                        <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
-                          <Cpu className="h-3.5 w-3.5" />
-                          <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
-                        </div>
-                        <div className="space-y-2">
-                          {msg.toolLogs.map((log) => {
-                            const isExpanded = !!expandedLogs[log.id];
-                            return (
-                              <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
-                                <div
-                                  onClick={() => {
-                                    setExpandedLogs((prev) => ({
-                                      ...prev,
-                                      [log.id]: !prev[log.id]
-                                    }));
-                                  }}
-                                  className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
-                                >
-                                  <div className="flex items-start space-x-2">
-                                    <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
-                                    <span className="font-mono text-[10.5px]">
-                                      {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
-                                      {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
-                                      {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
-                                      <span className="text-primary font-bold">{log.toolName}</span>
-                                      {log.resultSummary && (
-                                        <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
-                                      )}
-                                    </span>
-                                  </div>
-                                  <div className="text-gray-500 pl-2">
-                                    {isExpanded ? (
-                                      <LucideIcons.ChevronDown className="h-3 w-3 inline" />
-                                    ) : (
-                                      <LucideIcons.ChevronRight className="h-3 w-3 inline" />
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Collapsible Details Drawer */}
-                                {isExpanded && (
-                                  <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
-                                    <div>
-                                      <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                        {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                      isDeveloperMode ? (
+                        <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
+                          <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
+                            <Cpu className="h-3.5 w-3.5" />
+                            <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
+                          </div>
+                          <div className="space-y-2">
+                            {msg.toolLogs.map((log) => {
+                              const isExpanded = !!expandedLogs[log.id];
+                              return (
+                                <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
+                                  <div
+                                    onClick={() => {
+                                      setExpandedLogs((prev) => ({
+                                        ...prev,
+                                        [log.id]: !prev[log.id]
+                                      }));
+                                    }}
+                                    className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                                  >
+                                    <div className="flex items-start space-x-2">
+                                      <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
+                                      <span className="font-mono text-[10.5px]">
+                                        {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
+                                        {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
+                                        {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
+                                        <span className="text-primary font-bold">{log.toolName}</span>
+                                        {log.resultSummary && (
+                                          <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
+                                        )}
                                       </span>
-                                      <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
-                                        {typeof log.arguments === "string"
-                                          ? log.arguments
-                                          : JSON.stringify(log.arguments, null, 2)}
-                                      </pre>
                                     </div>
-                                    {log.rawOutput && (
+                                    <div className="text-gray-500 pl-2">
+                                      {isExpanded ? (
+                                        <LucideIcons.ChevronDown className="h-3 w-3 inline" />
+                                      ) : (
+                                        <LucideIcons.ChevronRight className="h-3 w-3 inline" />
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Collapsible Details Drawer */}
+                                  {isExpanded && (
+                                    <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
                                       <div>
-                                        <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                          {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
+                                        <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                          {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
                                         </span>
-                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
-                                          {log.rawOutput}
+                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
+                                          {typeof log.arguments === "string"
+                                            ? log.arguments
+                                            : JSON.stringify(log.arguments, null, 2)}
                                         </pre>
                                       </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                      {log.rawOutput && (
+                                        <div>
+                                          <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                            {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
+                                          </span>
+                                          <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
+                                            {log.rawOutput}
+                                          </pre>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="mb-3 rounded border border-border/20 bg-black/10 p-2.5 font-mono text-[10.5px] text-gray-400 space-y-1.5 select-none w-full">
+                          <div className="flex items-center space-x-1.5 text-primary/80 font-bold uppercase tracking-wider text-[9px] border-b border-border/10 pb-1 mb-1">
+                            <Cpu className="h-3 w-3" />
+                            <span>Assistant Process Log</span>
+                          </div>
+                          <div className="space-y-1 text-[10px]">
+                            {msg.toolLogs.map((log) => {
+                              let description = "Processing turn...";
+                              if (log.toolName === "read_pages") {
+                                description = "Checking welder reference guide and instruction pages.";
+                              } else if (log.toolName === "grep") {
+                                description = "Searching welder documentation database.";
+                              } else if (log.toolName.includes("LLM Completion")) {
+                                description = "Formulating parameter adjustments and generating layouts.";
+                              }
+                              return (
+                                <div key={log.id} className="flex items-center space-x-1.5">
+                                  <span className="h-1 w-1 rounded-full bg-accent" />
+                                  <span>{description}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {msg.role === "assistant" ? (
@@ -963,17 +1036,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                 <BookOpen className="h-3.5 w-3.5" />
                 <span>MANUAL EXPLORER</span>
               </button>
-              <button
-                onClick={() => setActiveRightTab("telemetry")}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                  activeRightTab === "telemetry"
-                    ? "bg-primary text-background border-primary font-bold shadow-md"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Terminal className="h-3.5 w-3.5" />
-                <span>TELEMETRY</span>
-              </button>
+              {/* Telemetry tab button removed */}
             </div>
           </div>
 
@@ -1036,12 +1099,20 @@ Please analyze this error, fix your code, and output the entire corrected React 
                                 <p className="text-xs text-gray-300 leading-relaxed">
                                   The welder assistant was unable to render this interactive component after multiple automatic self-correction attempts.
                                 </p>
-                                <div className="bg-black/40 border border-border p-3 rounded font-mono text-[10px] text-left text-error overflow-auto max-h-32">
-                                  {sandboxError}
-                                </div>
-                                <p className="text-[10px] text-gray-500 font-mono">
-                                  You can manually inspect or correct the code in the [Code] tab.
-                                </p>
+                                {isDeveloperMode ? (
+                                  <>
+                                    <div className="bg-black/40 border border-border p-3 rounded font-mono text-[10px] text-left text-error overflow-auto max-h-32">
+                                      {sandboxError}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 font-mono">
+                                      You can manually inspect or correct the code in the [Code] tab.
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="text-xs text-error/80 font-medium font-sans">
+                                    An internal setup error prevented this widget from launching.
+                                  </p>
+                                )}
                               </div>
                             ) : (
                               <div className="space-y-4">
@@ -1149,22 +1220,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
               </div>
             )}
 
-            {activeRightTab === "telemetry" && (
-              <div className="flex-1 flex flex-col rounded border border-border bg-black/80 font-mono p-4 overflow-auto space-y-3 text-[11px] text-gray-400">
-                <div className="flex items-center space-x-2 text-accent border-b border-border/40 pb-2 mb-2">
-                  <Terminal className="h-4 w-4" />
-                  <span className="font-bold tracking-widest uppercase">Agent Console Telemetry</span>
-                </div>
-                <div>[SYSTEM] Local runtime: Node.js v24.14.0</div>
-                <div>[SYSTEM] API Key configured: TRUE</div>
-                <div>[SYSTEM] Working Dir: c:\Users\henez\Documents\some_project\prox-challenge</div>
-                <div>[SYSTEM] Extracted assets path: /public/extracted</div>
-                <div>[SYSTEM] Claude Agent SDK Version: 1.x (Active)</div>
-                <div className="border-t border-border/30 pt-2 text-[10px] text-gray-600">
-                  Logs stream will record all SDK JSON messages and errors in this tab.
-                </div>
-              </div>
-            )}
+            {/* Telemetry tab panel body removed */}
           </div>
         </section>
       </main>
