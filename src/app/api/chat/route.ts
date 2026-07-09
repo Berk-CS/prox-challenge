@@ -179,7 +179,12 @@ REAL-TIME DIAGRAMS, PROGRAMMATIC SCHEMATICS & INTERACTIVE CONTENT (ARTIFACTS):
    - Polarity Socket wiring: For process setup questions, create an interactive React component that displays the sockets (+ and - terminals) and wires/cables plug-in locations based on the selected process (MIG Solid-core DCEP vs MIG Flux-core DCEN vs Stick vs TIG).
    - Duty Cycle Calculator: For duty cycle queries, write a React component calculator. It should take process and input amperage, and calculate: duty cycle %, weld time (min), rest time (min), and include a startable rest countdown timer widget.
    - Settings Configurator: For voltage/wire speed queries, write a React component settings configurator. Let the user select process, material type, wire size, and thickness, and instantly print the recommended wire feed speed, voltage, polarity setup, and gas choice.
-   Constraint: Use Tailwind CSS classes for styling. Do not include React imports; they are pre-configured. Use a default export.
+    Expectations when writing React component code:
+    * Structure: Write modern, functional React components (using standard function or arrow function syntax).
+    * Exports: Always end with a single default export exposing your component (e.g., 'export default PolaritySetup;').
+    * Mounting: Do NOT write any 'render(...)' calls; the sandbox will compile and mount your default export automatically.
+    * Imports: You can use standard ES imports for hooks (from 'react'), icons (from 'lucide-react'), and charts (from 'recharts'). The sandbox resolves them dynamically.
+    * Aesthetics: Style widgets to look premium and tactile, matching an industrial control panel (slate/zinc containers, custom border styling, amber/orange highlights, glowing indicators, fully functional form inputs, and transitions).
 
 3. TROUBLESHOOTING FLOWCHARTS (Mermaid Diagrams):
    Use Mermaid diagram artifacts for step-by-step defect troubleshooting. Remember to quote special characters in node labels: 'E["CTWD <= 1/2 inch"]'.

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext } from "react";
 import {
   Wrench,
   Settings,
@@ -91,18 +91,37 @@ const ReactRunnerSandbox = ({ code }: { code: string }) => {
   const { element, error } = useRunner({
     code: processedCode,
     scope: {
-      React,
       ...React,
+      React,
+      useState,
+      useEffect,
+      useMemo,
+      useCallback,
+      useRef,
+      useReducer,
+      useContext,
       ...LucideIcons, // expose Camera, Wrench, etc directly
       ...Recharts,    // expose ResponsiveContainer, LineChart directly
       import: {
-        react: React,
+        react: {
+          ...React,
+          default: React,
+          useState,
+          useEffect,
+          useMemo,
+          useCallback,
+          useRef,
+          useReducer,
+          useContext,
+        },
         "lucide-react": LucideIcons,
         "lucid3-react": LucideIcons,
         recharts: Recharts,
       },
     },
   });
+
+
 
   if (error) {
     return (
@@ -667,7 +686,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground select-none">
+    <div className="flex h-screen flex-col bg-background text-foreground">
       {/* Top Navbar */}
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-6">
         <div className="flex items-center space-x-3">
@@ -936,7 +955,7 @@ export default function Home() {
                       ) : (
                         <div className="h-full">
                           {/* Live render condition */}
-                          {isLoading && !isArtifactClosed ? (
+                          {isLoading ? (
                             <div className="flex flex-col items-center justify-center p-12 text-center text-gray-500 font-mono">
                               <Loader2 className="h-6 w-6 animate-spin text-accent mb-2" />
                               <span className="text-xs uppercase tracking-wider">Streaming Component Payload...</span>
@@ -947,29 +966,29 @@ export default function Home() {
                           ) : (
                             <div className="space-y-4">
                               {/* Dispatcher by type */}
-                              {activeArtifact.type === "application/vnd.ant.react" && (
+                              {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
                                 <ReactRunnerSandbox code={activeArtifact.content} />
                               )}
                               
-                              {activeArtifact.type === "application/vnd.ant.mermaid" && (
+                              {activeArtifact.type.toLowerCase().includes("mermaid") && (
                                 <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
                               )}
                               
-                              {activeArtifact.type === "image/svg+xml" && (
+                              {activeArtifact.type.toLowerCase().includes("svg") && (
                                 <SvgSandbox content={activeArtifact.content} />
                               )}
                               
-                              {activeArtifact.type === "text/html" && (
+                              {activeArtifact.type.toLowerCase().includes("html") && (
                                 <HtmlSandbox content={activeArtifact.content} />
                               )}
                               
-                              {activeArtifact.type === "text/markdown" && (
+                              {activeArtifact.type.toLowerCase().includes("markdown") && (
                                 <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
                                   {activeArtifact.content}
                                 </div>
                               )}
                               
-                              {activeArtifact.type === "application/vnd.ant.code" && (
+                              {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
                                 <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
                                   <code>{activeArtifact.content}</code>
                                 </pre>
