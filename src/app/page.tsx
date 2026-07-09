@@ -429,6 +429,7 @@ export default function Home() {
   // Settings and mode states
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(true);
+  const [selectedModel, setSelectedModel] = useState<"openai" | "claude">("openai");
 
   // Local code editor state and copied state
   const [localCode, setLocalCode] = useState<string>(" ");
@@ -620,7 +621,8 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages.filter(m => m.role !== 'system'), userMessage]
+          messages: [...messages.filter(m => m.role !== 'system'), userMessage],
+          model: selectedModel
         })
       });
 
@@ -1061,7 +1063,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
 
           {/* Settings Dropdown */}
           {showSettings && (
-            <div className="absolute right-0 top-10 z-50 w-52 rounded border border-border bg-surface p-3 shadow-xl font-mono text-xs text-gray-300">
+            <div className="absolute right-0 top-10 z-50 w-56 rounded border border-border bg-surface p-3 shadow-xl font-mono text-xs text-gray-300">
               <div className="border-b border-border pb-1.5 mb-2 font-bold text-[10px] uppercase text-primary tracking-wider">
                 System Workspace Mode
               </div>
@@ -1083,6 +1085,32 @@ Please analyze this error, fix your code, and output the entire corrected React 
                     name="workspace-mode"
                     checked={!isDeveloperMode}
                     onChange={() => setIsDeveloperMode(false)}
+                    className="accent-primary"
+                  />
+                </label>
+              </div>
+
+              <div className="border-b border-border pb-1.5 mb-2 mt-4 font-bold text-[10px] uppercase text-primary tracking-wider">
+                Language Model
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center justify-between cursor-pointer py-1 hover:bg-black/20 px-1 rounded transition-colors select-none">
+                  <span>GPT-5.4 (OpenAI)</span>
+                  <input
+                    type="radio"
+                    name="model-select"
+                    checked={selectedModel === "openai"}
+                    onChange={() => setSelectedModel("openai")}
+                    className="accent-primary"
+                  />
+                </label>
+                <label className="flex items-center justify-between cursor-pointer py-1 hover:bg-black/20 px-1 rounded transition-colors select-none">
+                  <span>Claude Code (SDK)</span>
+                  <input
+                    type="radio"
+                    name="model-select"
+                    checked={selectedModel === "claude"}
+                    onChange={() => setSelectedModel("claude")}
                     className="accent-primary"
                   />
                 </label>

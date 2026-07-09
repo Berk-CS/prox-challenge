@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from "openai";
+import { query } from "@anthropic-ai/claude-agent-sdk";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -129,10 +130,109 @@ function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const { messages, model } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "No messages provided." }, { status: 400 });
+    }
+
+    const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
+    if (isAnthropic) {
+      const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
+      const promptText = lastUserMessage?.text || lastUserMessage?.content || "";
+
+      const stream = query({
+        prompt: promptText,
+        options: {
+          cwd: process.cwd(),
+          continue: true,
+          model: "claude-sonnet-5",
+          allowedTools: ["Read", "Grep", "Bash", "Edit", "Glob"]
+        }
+      });
+
+      const encoder = new TextEncoder();
+      const responseStream = new ReadableStream({
+        async start(controller) {
+          const sendEvent = (data: any) => {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          };
+
+          try {
+            sendEvent({
+              type: "llm_turn",
+              id: "llm-turn-claude",
+              input: `Prompting Claude Code with query: "${promptText.slice(0, 100)}..."`,
+              status: "running"
+            });
+
+            let assistantText = "";
+            for await (const message of stream) {
+              if (message.type === "stream_event") {
+                const event = message.event;
+                if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                  assistantText += event.delta.text;
+                }
+                sendEvent(message);
+              } else if (message.type === "tool_progress") {
+                sendEvent({
+                  type: "stream_event",
+                  event: {
+                    type: "tool_use",
+                    id: message.tool_use_id,
+                    name: message.tool_name,
+                    input: `Executing tool...`
+                  }
+                });
+              } else if (message.type === "tool_use_summary") {
+                sendEvent({
+                  type: "tool_use_summary",
+                  toolName: message.summary.split(" ")[0] || "Tool",
+                  isError: false,
+                  summary: message.summary,
+                  result: ""
+                });
+              }
+            }
+
+            sendEvent({
+              type: "llm_turn_summary",
+              id: "llm-turn-claude",
+              output: assistantText || "[No content returned]"
+            });
+
+            sendEvent({
+              type: "assistant",
+              message: {
+                content: [
+                  {
+                    type: "text",
+                    text: assistantText
+                  }
+                ]
+              }
+            });
+
+          } catch (err: any) {
+            console.error("Claude Agent SDK error:", err);
+            sendEvent({
+              type: "system",
+              subtype: "error",
+              message: err.message || "Unknown error in Claude Agent SDK"
+            });
+          } finally {
+            controller.close();
+          }
+        }
+      });
+
+      return new NextResponse(responseStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive"
+        }
+      });
     }
 
     // Load compact manual index dynamically
