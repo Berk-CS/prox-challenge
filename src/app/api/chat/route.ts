@@ -1,111 +1,379 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@anthropic-ai/claude-agent-sdk";
+import { OpenAI } from "openai";
+import * as fs from "fs";
+import * as path from "path";
 
 export const dynamic = "force-dynamic";
 
-// Define the system prompt that configures our welder agent
-const WELDER_SYSTEM_PROMPT = `You are a professional, expert reasoning assistant for the Vulcan OmniPro 220 multiprocess welder.
-Your goal is to answer deep technical questions about this welder accurately, helpfully, and using multimodal artifacts when helpful.
+// Model definition: we default to gpt-4o-mini for ultra-low latency and cost.
+// If higher-level technical reasoning is desired, it can be changed to "gpt-4o".
+const OPENAI_MODEL = "gpt-4o-mini";
 
-You have access to the welder owner's manual, quick start guide, and process selection chart. These manuals have been pre-processed and extracted page-by-page as markdown files in the directory: "public/extracted/text/".
-The directory structure is:
-- Owner's Manual: "public/extracted/text/owner-manual/page_<num>.md" (1 to 48)
-- Quick Start Guide: "public/extracted/text/quick-start-guide/page_<num>.md" (1 to 2)
-- Selection Chart: "public/extracted/text/selection-chart/page_1.md"
+// Tool schemas for the OpenAI Chat Completions API
+const tools = [
+  {
+    type: "function" as const,
+    function: {
+      name: "read_pages",
+      description: "Reads the content of specified page-level markdown files for a given manual source.",
+      parameters: {
+        type: "object",
+        properties: {
+          source: {
+            type: "string",
+            enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+            description: "The source manual to read from."
+          },
+          pages: {
+            type: "array",
+            items: {
+              type: "integer"
+            },
+            description: "An array of page numbers to load."
+          }
+        },
+        required: ["source", "pages"]
+      }
+    }
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "grep",
+      description: "Searches for a keyword or phrase across all page markdown files.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The exact search term or phrase to look for."
+          },
+          source: {
+            type: "string",
+            enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+            description: "Optional. Restricts search to a specific manual source."
+          }
+        },
+        required: ["query"]
+      }
+    }
+  }
+];
 
-Extracted images are stored in "public/extracted/images/<manual_name>/".
-For example:
-- The wire feed mechanism or panel controls images can be referenced using standard img tags pointing to "/extracted/images/owner-manual/page_<num>_<index>.<ext>".
-- Weld diagnosis examples and weld defects photos are in page 38 (e.g. "/extracted/images/owner-manual/page_38_1.jpeg" to "page_38_7.jpeg").
+// Helper functions for reading page contents and grep
+function readPage(source: string, pageNum: number): string {
+  const filePath = path.join(
+    process.cwd(),
+    "public",
+    "extracted",
+    "text",
+    source,
+    `page_${pageNum}.md`
+  );
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath, "utf-8");
+  }
+  return `Error: Page ${pageNum} not found in ${source}.`;
+}
 
-CRITICAL DIRECTIONS:
-1. TECHNICAL ACCURACY:
-   - When asked a technical question (e.g., duty cycle, polarity, wiring, settings, troubleshooting), ALWAYS use your tools (Grep or Read) to lookup the exact page in the manual first. Do not guess or assume.
-   - For example:
-     - MIG duty cycles are on page 14 of the Owner's Manual.
-     - Polarity settings and socket configurations are detailed on pages 19-22 of the Owner's Manual.
-     - Weld defect troubleshooting is detailed on page 38 of the Owner's Manual.
+interface GrepMatch {
+  source: string;
+  page: number;
+  lineNum: number;
+  lineContent: string;
+}
 
-2. MULTIMODAL RESPONSES (ARTIFACTS):
-   - You can create and reference artifacts. Artifacts are self-contained, interactive or visual blocks displayed alongside the chat.
-   - To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
-     <antArtifact identifier="unique-id" type="MIME-TYPE" title="Title">
-       [content]
-     </antArtifact>
-   - Supported Types:
-     - React Component ("application/vnd.ant.react"): Use this for interactive widgets like a Duty Cycle Calculator, a settings configurator, or a wiring selector. Use Tailwind classes for styling (no arbitrary values). Do not include React imports; they are pre-configured. Use a default export.
-     - Mermaid Diagram ("application/vnd.ant.mermaid"): Use for troubleshooting flowcharts or decision trees. CRITICAL: In Mermaid diagrams, you MUST ALWAYS wrap node labels in double quotes if they contain special characters, math symbols (≤), or brackets (e.g. write \`E["CTWD ≤ 1/2 inch"]\`). DO NOT use nested double-quotes (") inside node labels; instead, write out units (like 'inch') or use single quotes to prevent syntax crashes.
-     - SVG Diagram ("image/svg+xml"): Use for quick custom visual illustrations, e.g. drawing welding joint designs or sockets wiring.
-     - HTML/CSS/JS ("text/html"): For rich sandboxed custom panels. Use placeholder layouts if needed.
-     - Markdown document ("text/markdown") or code snippets ("application/vnd.ant.code").
-   
-   - If someone asks about polarity setup, draw or display a custom SVG diagram of which socket the ground clamp and torch connect to, or use an iframe rendering these configurations.
-   - If someone asks about weld defects, display the extracted image files from page 38 (e.g., "/extracted/images/owner-manual/page_38_1.jpeg" for porosity, etc.) alongside explanations.
-   - If the user asks a complex scenario (e.g., thickness + material + process), write a settings configurator React widget so they can customize input and see recommendations dynamically.
-`;
+function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
+  const matches: GrepMatch[] = [];
+  const textDir = path.join(process.cwd(), "public", "extracted", "text");
+  
+  const sources = sourceFilter 
+    ? [sourceFilter] 
+    : ["owner-manual", "quick-start-guide", "selection-chart"];
+  
+  const lowerQuery = query.toLowerCase();
+  
+  for (const src of sources) {
+    const srcDir = path.join(textDir, src);
+    if (!fs.existsSync(srcDir)) continue;
+    
+    const files = fs.readdirSync(srcDir);
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue;
+      
+      const matchPage = file.match(/page_(\d+)\.md/);
+      if (!matchPage) continue;
+      const pageNum = parseInt(matchPage[1], 10);
+      
+      const filePath = path.join(srcDir, file);
+      const content = fs.readFileSync(filePath, "utf-8");
+      const lines = content.split("\n");
+      
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].toLowerCase().includes(lowerQuery)) {
+          matches.push({
+            source: src,
+            page: pageNum,
+            lineNum: i + 1,
+            lineContent: lines[i].trim()
+          });
+          
+          if (matches.length >= 30) {
+            return matches;
+          }
+        }
+      }
+    }
+  }
+  return matches;
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    // Extract standard message format or just the last query
-    let promptText = "";
-    if (Array.isArray(messages)) {
-      const lastMsg = messages[messages.length - 1];
-      promptText = lastMsg ? (lastMsg.content || lastMsg.text || "") : "";
-    } else {
-      promptText = String(messages || "");
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: "No messages provided." }, { status: 400 });
     }
 
-    if (!promptText) {
-      return NextResponse.json({ error: "No prompt provided - please ensure messages is non-empty and has a valid prompt string in the 'text' or 'content' field." }, { status: 400 });
+    // Load compact manual index dynamically
+    const compactIndexPath = path.join(process.cwd(), "public", "extracted", "manual_index_compact.json");
+    let compactIndexStr = "";
+    if (fs.existsSync(compactIndexPath)) {
+      compactIndexStr = fs.readFileSync(compactIndexPath, "utf-8");
     }
+
+    const SYSTEM_PROMPT = `You are a professional, expert reasoning assistant for the Vulcan OmniPro 220 multiprocess welder.
+Your goal is to answer deep technical questions about this welder accurately, helpfully, and using the official manuals.
+
+To ensure accuracy and avoid hallucination, you must check the manuals. You have access to a compacted index of the manuals which maps section titles to page numbers and outlines visual assets.
+Here is the compacted manual index content:
+${compactIndexStr}
+
+Key Mapping for the compact index:
+- om = Owner's Manual, qsg = Quick Start Guide, sc = Selection Chart
+- t = Section Title
+- p = Page numbers belonging to this section
+- v = Visual assets on the pages (omitted if none exist)
+- d = Detailed description of the diagram/visual (useful for checking if a diagram is relevant)
+
+CRITICAL PROCESS FOR RECOVERING MANUAL CONTENT:
+1. Lookup the index inside your prompt to find relevant pages.
+2. Call the "read_pages" tool to load the contents of the relevant pages.
+3. If the index does not help or your search is too specific, use the "grep" tool to find word matches across the manual pages.
+4. Cite your sources in your final response: use [Owner's Manual p. XX], [Quick Start Guide p. XX], or [Selection Chart p. XX] format.
+
+MULTIMODAL RESPONSES (ARTIFACTS):
+- You can create and reference artifacts. Artifacts are self-contained, interactive or visual blocks displayed alongside the chat.
+- To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
+  <antArtifact identifier="unique-id" type="MIME-TYPE" title="Title">
+    [content]
+  </antArtifact>
+- Supported Types:
+  - React Component ("application/vnd.ant.react"): Use this for interactive widgets like a Duty Cycle Calculator, a settings configurator, or a wiring selector. Use Tailwind classes for styling (no arbitrary values). Do not include React imports; they are pre-configured. Use a default export.
+  - Mermaid Diagram ("application/vnd.ant.mermaid"): Use for troubleshooting flowcharts. Node labels with special characters must be double-quoted (e.g. write \`E["CTWD <= 1/2 inch"]\`).
+  - SVG Diagram ("image/svg+xml"): Use for quick custom visual illustrations, e.g. drawing welding joint designs or sockets wiring.
+  - HTML/CSS/JS ("text/html"): For rich sandboxed custom preview pages.
+  - Markdown document ("text/markdown") or code snippets ("application/vnd.ant.code").
+`;
 
     // Set up SSE Stream headers
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
+        const sendEvent = (data: any) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        };
+
         try {
-          // Initialize agent query loop
-          const agentStream = query({
-            prompt: promptText,
-            options: {
-              cwd: process.cwd(),
-              model: "claude-5-sonnet",
-              cache_control: { type: "ephemeral" },
-              agent: "vulcan-expert",
-              agents: {
-                "vulcan-expert": {
-                  description: "Expert assistant for Vulcan OmniPro 220 welder",
-                  prompt: WELDER_SYSTEM_PROMPT,
-                  tools: ["Read", "Grep", "Glob"]
-                }
-              },
-              allowedTools: ["Read", "Grep", "Glob"],
-              env: {
-                ...process.env,
-                CLAUDE_AGENT_SDK_CLIENT_APP: "vulcan-welder-dashboard/1.0.0"
-              }
-            }
+          const client = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
           });
 
-          // Read messages from the generator
-          for await (const message of agentStream) {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
-            );
+          // Formulate full message history
+          const apiMessages: any[] = [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...messages.map((m: any) => ({
+              role: m.role,
+              content: m.text || m.content || ""
+            }))
+          ];
+
+          let keepRunning = true;
+          let iterations = 0;
+          const maxIterations = 5;
+
+          while (keepRunning && iterations < maxIterations) {
+            iterations++;
+            console.log(`Agent Loop Turn ${iterations}`);
+
+            const responseStream = await client.chat.completions.create({
+              model: OPENAI_MODEL,
+              messages: apiMessages,
+              tools: tools,
+              stream: true
+            });
+
+            let assistantText = "";
+            let toolCallsAccumulator: any[] = [];
+
+            for await (const chunk of responseStream) {
+              const delta = chunk.choices[0]?.delta;
+              if (!delta) continue;
+
+              // 1. Text deltas
+              if (delta.content) {
+                assistantText += delta.content;
+                sendEvent({
+                  type: "stream_event",
+                  event: {
+                    type: "content_block_delta",
+                    delta: {
+                      type: "text_delta",
+                      text: delta.content
+                    }
+                  }
+                });
+              }
+
+              // 2. Tool calls deltas
+              if (delta.tool_calls) {
+                for (const toolCallDelta of delta.tool_calls) {
+                  const idx = toolCallDelta.index;
+                  if (toolCallsAccumulator[idx] === undefined) {
+                    toolCallsAccumulator[idx] = {
+                      id: toolCallDelta.id || "",
+                      name: toolCallDelta.function?.name || "",
+                      arguments: toolCallDelta.function?.arguments || ""
+                    };
+                  } else {
+                    if (toolCallDelta.id) {
+                      toolCallsAccumulator[idx].id = toolCallDelta.id;
+                    }
+                    if (toolCallDelta.function?.name) {
+                      toolCallsAccumulator[idx].name = toolCallDelta.function.name;
+                    }
+                    if (toolCallDelta.function?.arguments) {
+                      toolCallsAccumulator[idx].arguments += toolCallDelta.function.arguments;
+                    }
+                  }
+                }
+              }
+            }
+
+            const toolCalls = toolCallsAccumulator.filter(tc => tc !== undefined && tc.name !== "");
+
+            if (toolCalls.length > 0) {
+              console.log("Executing tools:", toolCalls);
+
+              // Add assistant message with tool calls to message history
+              apiMessages.push({
+                role: "assistant",
+                content: assistantText || null,
+                tool_calls: toolCalls.map(tc => ({
+                  id: tc.id,
+                  type: "function" as const,
+                  function: {
+                    name: tc.name,
+                    arguments: tc.arguments
+                  }
+                }))
+              });
+
+              for (const tc of toolCalls) {
+                let parsedArgs: any = {};
+                try {
+                  parsedArgs = JSON.parse(tc.arguments);
+                } catch (e) {
+                  console.error("Arguments parsing failed:", tc.arguments);
+                }
+
+                // Send tool_use initiation event to client
+                sendEvent({
+                  type: "stream_event",
+                  event: {
+                    type: "tool_use",
+                    id: tc.id,
+                    name: tc.name,
+                    input: parsedArgs
+                  }
+                });
+
+                let result = "";
+                let summary = "";
+                let isError = false;
+
+                try {
+                  if (tc.name === "read_pages") {
+                    const { source, pages } = parsedArgs;
+                    if (!source || !pages || !Array.isArray(pages)) {
+                      throw new Error("Missing parameters 'source' or 'pages' in read_pages");
+                    }
+                    const contents = pages.map((p: number) => {
+                      const text = readPage(source, p);
+                      return `--- Page ${p} (${source}) ---\n${text}`;
+                    });
+                    result = contents.join("\n\n");
+                    summary = `Loaded ${pages.length} pages of '${source}': [${pages.join(", ")}]`;
+                  } else if (tc.name === "grep") {
+                    const { query, source } = parsedArgs;
+                    if (!query) {
+                      throw new Error("Missing parameter 'query' in grep");
+                    }
+                    const matches = runGrep(query, source);
+                    result = JSON.stringify(matches, null, 2);
+                    summary = `Searched for "${query}" across manuals. Found ${matches.length} matches.`;
+                  } else {
+                    throw new Error(`Unknown tool: ${tc.name}`);
+                  }
+                } catch (err: any) {
+                  console.error(`Tool execution failed for ${tc.name}:`, err);
+                  result = `Error executing tool: ${err.message}`;
+                  summary = `Failed: ${err.message}`;
+                  isError = true;
+                }
+
+                // Add tool result to message history
+                apiMessages.push({
+                  role: "tool",
+                  tool_call_id: tc.id,
+                  name: tc.name,
+                  content: result
+                });
+
+                // Stream tool summary
+                sendEvent({
+                  type: "tool_use_summary",
+                  toolName: tc.name,
+                  isError: isError,
+                  summary: summary
+                });
+              }
+
+              keepRunning = true;
+            } else {
+              keepRunning = false;
+              // Stream final message package
+              sendEvent({
+                type: "assistant",
+                message: {
+                  content: [
+                    {
+                      type: "text",
+                      text: assistantText
+                    }
+                  ]
+                }
+              });
+            }
           }
         } catch (err: any) {
           console.error("Agent loop failed:", err);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "system",
-                subtype: "error",
-                message: err.message || "Unknown internal error in agent loop"
-              })}\n\n`
-            )
-          );
+          sendEvent({
+            type: "system",
+            subtype: "error",
+            message: err.message || "Unknown internal error in agent loop"
+          });
         } finally {
           controller.close();
         }
