@@ -1018,22 +1018,24 @@ Please analyze this error, fix your code, and output the entire corrected React 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       {/* Top Navbar */}
-      <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-6">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-background font-black italic">
+      <header className="relative flex h-16 items-end pb-3 justify-between border-b border-border bg-surface px-6">
+        <div className="flex items-center">
+          <div className="hidden md:block w-36 h-2 hazard-stripes border border-border opacity-30"></div>
+        </div>
+
+        <div className="absolute left-1/2 bottom-3 -translate-x-1/2 flex items-center space-x-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-background font-black italic select-none">
             V
           </div>
-          <div>
-            <h1 className="text-sm font-black tracking-wider text-primary">
+          <div className="flex flex-col items-start">
+            <h1 className="text-sm font-black tracking-wider text-primary leading-none">
               VULCAN OMNIPRO 220
             </h1>
-            <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">
+            <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mt-1">
               Multimodal Reasoning Workspace
             </p>
           </div>
         </div>
-
-        <div className="hidden md:block w-36 h-2 hazard-stripes border border-border opacity-40"></div>
 
         <div className="flex items-center space-x-4 relative">
           <div className="flex items-center space-x-2 rounded-full border border-border bg-black/40 px-3 py-1 text-[11px] font-mono">
