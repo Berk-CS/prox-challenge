@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import * as Recharts from "recharts";
-import { SandpackProvider, SandpackPreview } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview, useSandpack } from "@codesandbox/sandpack-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -58,72 +58,62 @@ interface ExtractedArtifact {
 function prepareCodeForSandpack(rawCode: string): string {
   if (!rawCode) return "";
   
-  // 1. Strip any existing import statements
-  let cleanCode = rawCode.replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, "");
+  let cleanCode = rawCode;
   
-  // 2. Strip any existing export default statements
-  let name = "";
-  const funcMatch = cleanCode.match(/export\s+default\s+function\s+(\w+)/);
-  if (funcMatch) {
-    name = funcMatch[1];
-    cleanCode = cleanCode.replace(/export\s+default\s+function/g, "function");
-  } else {
-    const varMatch = cleanCode.match(/export\s+default\s+(\w+)\s*;/);
-    if (varMatch) {
-      name = varMatch[1];
-      cleanCode = cleanCode.replace(/export\s+default\s+(\w+)\s*;/g, "");
-    } else {
-      const arrowMatch = cleanCode.includes("export default");
-      if (arrowMatch) {
-        cleanCode = cleanCode.replace(/export\s+default/g, "const TempComponent =");
-        name = "TempComponent";
-      }
-    }
+  // 1. Ensure React is imported if JSX is used and no React import exists (case insensitive check)
+  if (!/import\s+React\b/i.test(cleanCode) && !/import\s+\*\s+as\s+React\b/i.test(cleanCode)) {
+    cleanCode = `import React from 'react';\n` + cleanCode;
   }
   
-  // If no name found from export default, auto-detect PascalCase component name
-  if (!name) {
+  // 2. Ensure we have a default export if missing (using case-insensitive search)
+  const hasExportDefault = /export\s+default/i.test(cleanCode);
+  if (!hasExportDefault) {
     const anyFuncMatch = cleanCode.match(/(?:function|const|let|var)\s+([A-Z]\w+)/);
     if (anyFuncMatch) {
-      name = anyFuncMatch[1];
+      const name = anyFuncMatch[1];
+      cleanCode += `\nexport default ${name};`;
     }
   }
 
-  // 3. Scan for Lucide Icons
-  const lucideIconsList = [
-    "Wrench", "Settings", "BookOpen", "Terminal", "Cpu", "Layers", "Send", "Loader2",
-    "FileText", "AlertTriangle", "Flame", "CheckCircle", "Code", "Eye", "RefreshCw",
-    "Play", "Sparkles", "Clock", "ArrowRight", "ChevronRight", "ChevronDown", "Camera",
-    "Zap", "Info", "HelpCircle", "AlertCircle", "Sliders", "Activity", "Clock3"
-  ];
-  const usedIcons = lucideIconsList.filter(icon => new RegExp(`\\b${icon}\\b`).test(cleanCode));
-  const lucideImport = usedIcons.length > 0 
-    ? `import { ${usedIcons.join(', ')} } from 'lucide-react';`
-    : '';
-
-  // 4. Scan for Recharts Components
-  const rechartsList = [
-    "ResponsiveContainer", "LineChart", "Line", "BarChart", "Bar", "PieChart", "Pie",
-    "AreaChart", "Area", "XAxis", "YAxis", "CartesianGrid", "Tooltip", "Legend", "Cell"
-  ];
-  const usedRecharts = rechartsList.filter(comp => new RegExp(`\\b${comp}\\b`).test(cleanCode));
-  const rechartsImport = usedRecharts.length > 0
-    ? `import { ${usedRecharts.join(', ')} } from 'recharts';`
-    : '';
-
-  const exportDefault = name ? `export default ${name};` : '';
-
-  return `import React, { useState, useEffect, useMemo, useCallback, useRef, useReducer, useContext } from 'react';
-${lucideImport}
-${rechartsImport}
-
-${cleanCode.trim()}
-
-${exportDefault}
-`.trim();
+  return cleanCode.trim();
 }
 
-const SandpackSandbox = ({ code }: { code: string }) => {
+const SandpackErrorListener = ({ 
+  onError, 
+  onSuccess,
+  isLoading
+}: { 
+  onError: (error: string) => void; 
+  onSuccess?: () => void;
+  isLoading: boolean;
+}) => {
+  const { sandpack } = useSandpack();
+
+  useEffect(() => {
+    // Guard: Only process compilation errors / success once streaming has completed
+    if (isLoading) return;
+
+    if (sandpack.error) {
+      onError(sandpack.error.message);
+    } else if (sandpack.status === "done") {
+      onSuccess?.();
+    }
+  }, [sandpack.error, sandpack.status, isLoading, onError, onSuccess]);
+
+  return null;
+};
+
+const SandpackSandbox = ({ 
+  code, 
+  onError, 
+  onSuccess, 
+  isLoading 
+}: { 
+  code: string; 
+  onError: (error: string) => void; 
+  onSuccess: () => void; 
+  isLoading: boolean; 
+}) => {
   const preparedCode = useMemo(() => prepareCodeForSandpack(code), [code]);
 
   return (
@@ -141,6 +131,7 @@ const SandpackSandbox = ({ code }: { code: string }) => {
           }
         }}
       >
+        <SandpackErrorListener onError={onError} onSuccess={onSuccess} isLoading={isLoading} />
         <SandpackPreview style={{ height: "550px" }} showNavigator={false} showRestartButton={true} />
       </SandpackProvider>
     </div>
@@ -376,6 +367,10 @@ export default function Home() {
   const [artifacts, setArtifacts] = useState<Record<string, ExtractedArtifact>>({});
   const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
 
+  // Sandbox retry and error states
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const [sandboxError, setSandboxError] = useState<string | null>(null);
+
   // Manual viewer state
   const [selectedDoc, setSelectedDoc] = useState<string>("owner-manual");
   const [selectedPage, setSelectedPage] = useState<number>(1);
@@ -479,18 +474,23 @@ export default function Home() {
     }));
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (customText?: string) => {
+    const textToSend = customText || input;
+    if (!textToSend.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
-      text: input,
+      text: textToSend,
       timestamp: new Date().toLocaleTimeString()
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    if (!customText) {
+      setInput("");
+      setRetryCount(0);
+      setSandboxError(null);
+    }
     setIsLoading(true);
     setToolLogs([]); // clear logs
     setExpandedLogs({}); // clear expanded states
@@ -692,6 +692,31 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const handleSandboxSuccess = useCallback(() => {
+    setSandboxError(null);
+    setRetryCount(0);
+  }, []);
+
+  const handleAutoRetry = useCallback((errorMsg: string) => {
+    if (isLoading) return;
+
+    if (retryCount < 2) {
+      setRetryCount((prev) => prev + 1);
+      setSandboxError(errorMsg);
+
+      const attemptNum = retryCount + 1;
+      const errorPrompt = `[Auto-Correction Attempt ${attemptNum}/2] The React component code you generated failed to compile in the workspace sandbox with the following error:
+\`\`\`
+${errorMsg}
+\`\`\`
+Please analyze this error, fix your code, and output the entire corrected React component code block wrapped in <antArtifact> tags. Ensure it compiles cleanly.`;
+
+      handleSend(errorPrompt);
+    } else {
+      setSandboxError(errorMsg);
+    }
+  }, [isLoading, retryCount, handleSend]);
 
   const activeArtifact = activeArtifactId ? artifacts[activeArtifactId] : null;
   const isArtifactClosed = activeArtifact && messages.find(m => m.role === 'assistant' && m.text.includes(`</antArtifact>`));
@@ -902,7 +927,7 @@ export default function Home() {
                 className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600"
               />
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
                 className="rounded bg-primary p-2 text-background hover:bg-primary-hover disabled:bg-border disabled:text-gray-600 transition-colors"
               >
@@ -1004,36 +1029,57 @@ export default function Home() {
                               </pre>
                             </div>
                           ) : (
-                            <div className="space-y-4">
-                              {/* Dispatcher by type */}
-                              {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
-                                <SandpackSandbox code={activeArtifact.content} />
-                              )}
-                              
-                              {activeArtifact.type.toLowerCase().includes("mermaid") && (
-                                <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
-                              )}
-                              
-                              {activeArtifact.type.toLowerCase().includes("svg") && (
-                                <SvgSandbox content={activeArtifact.content} />
-                              )}
-                              
-                              {activeArtifact.type.toLowerCase().includes("html") && (
-                                <HtmlSandbox content={activeArtifact.content} />
-                              )}
-                              
-                              {activeArtifact.type.toLowerCase().includes("markdown") && (
-                                <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
-                                  {activeArtifact.content}
+                            retryCount >= 2 && sandboxError ? (
+                              <div className="p-6 bg-error/10 border border-error/20 rounded text-center max-w-md mx-auto space-y-4 my-12">
+                                <AlertTriangle className="h-10 w-10 text-error mx-auto animate-bounce" />
+                                <h3 className="text-xs font-black uppercase text-error tracking-wider font-mono">Workspace Component Failure</h3>
+                                <p className="text-xs text-gray-300 leading-relaxed">
+                                  The welder assistant was unable to render this interactive component after multiple automatic self-correction attempts.
+                                </p>
+                                <div className="bg-black/40 border border-border p-3 rounded font-mono text-[10px] text-left text-error overflow-auto max-h-32">
+                                  {sandboxError}
                                 </div>
-                              )}
-                              
-                              {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
-                                <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
-                                  <code>{activeArtifact.content}</code>
-                                </pre>
-                              )}
-                            </div>
+                                <p className="text-[10px] text-gray-500 font-mono">
+                                  You can manually inspect or correct the code in the [Code] tab.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {/* Dispatcher by type */}
+                                {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
+                                  <SandpackSandbox 
+                                    code={activeArtifact.content} 
+                                    onError={handleAutoRetry} 
+                                    onSuccess={handleSandboxSuccess} 
+                                    isLoading={isLoading} 
+                                  />
+                                )}
+                                
+                                {activeArtifact.type.toLowerCase().includes("mermaid") && (
+                                  <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
+                                )}
+                                
+                                {activeArtifact.type.toLowerCase().includes("svg") && (
+                                  <SvgSandbox content={activeArtifact.content} />
+                                )}
+                                
+                                {activeArtifact.type.toLowerCase().includes("html") && (
+                                  <HtmlSandbox content={activeArtifact.content} />
+                                )}
+                                
+                                {activeArtifact.type.toLowerCase().includes("markdown") && (
+                                  <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
+                                    {activeArtifact.content}
+                                  </div>
+                                )}
+                                
+                                {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
+                                  <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
+                                    <code>{activeArtifact.content}</code>
+                                  </pre>
+                                )}
+                              </div>
+                            )
                           )}
                         </div>
                       )}

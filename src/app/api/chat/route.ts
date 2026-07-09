@@ -6,7 +6,7 @@ import * as path from "path";
 export const dynamic = "force-dynamic";
 
 
-const OPENAI_MODEL = "gpt-5.4-mini";
+const OPENAI_MODEL = "gpt-5.4";
 
 // Tool schemas for the OpenAI Chat Completions API
 const tools = [
