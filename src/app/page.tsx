@@ -22,6 +22,9 @@ import {
 import * as LucideIcons from "lucide-react";
 import * as Recharts from "recharts";
 import { useRunner } from "react-runner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 interface ToolLog {
   id: string;
@@ -216,6 +219,106 @@ const HtmlSandbox = ({ content }: { content: string }) => {
     </div>
   );
 };
+
+// ----------------------------------------------------
+// BEAUTIFIED MARKDOWN RENDERER
+// ----------------------------------------------------
+const MarkdownRenderer = ({ content }: { content: string }) => {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        h1: ({ children }) => (
+          <h1 className="text-sm font-black text-primary mt-3 mb-1.5 border-b border-border/60 pb-0.5 uppercase tracking-wider">
+            {children}
+          </h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="text-xs font-bold text-accent mt-2.5 mb-1 uppercase tracking-wider">
+            {children}
+          </h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="text-xs font-bold text-gray-100 mt-2 mb-1">
+            {children}
+          </h3>
+        ),
+        p: ({ children }) => (
+          <p className="mb-2 last:mb-0 leading-relaxed text-gray-200 text-xs">
+            {children}
+          </p>
+        ),
+        ul: ({ children }) => (
+          <ul className="list-disc pl-4 mb-2 space-y-1 text-gray-300 text-xs">
+            {children}
+          </ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal pl-4 mb-2 space-y-1 text-gray-300 text-xs">
+            {children}
+          </ol>
+        ),
+        li: ({ children }) => (
+          <li className="leading-relaxed">{children}</li>
+        ),
+        table: ({ children }) => (
+          <div className="my-2.5 overflow-x-auto rounded border border-border/40 bg-black/25">
+            <table className="w-full text-left text-[11px] border-collapse">
+              {children}
+            </table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="bg-surface/80 border-b border-border/50 text-gray-400 font-bold uppercase tracking-wider text-[9px] font-mono">
+            {children}
+          </thead>
+        ),
+        tbody: ({ children }) => (
+          <tbody className="divide-y divide-border/20">{children}</tbody>
+        ),
+        tr: ({ children }) => (
+          <tr className="hover:bg-white/5 transition-colors">{children}</tr>
+        ),
+        th: ({ children }) => (
+          <th className="px-2.5 py-1.5 font-bold">{children}</th>
+        ),
+        td: ({ children }) => (
+          <td className="px-2.5 py-1.5 text-gray-300">{children}</td>
+        ),
+        code: ({ className, children }) => {
+          const match = /language-(\w+)/.exec(className || "");
+          const isInline = !match;
+          if (isInline) {
+            return (
+              <code className="bg-surface-light border border-border/40 px-1 py-0.5 rounded font-mono text-[10px] text-accent">
+                {children}
+              </code>
+            );
+          }
+          return (
+            <pre className="my-2 bg-[#09090b] border border-border/40 rounded p-2 overflow-x-auto font-mono text-[10px] text-green-400 leading-normal">
+              <code>{children}</code>
+            </pre>
+          );
+        },
+        strong: ({ children }) => (
+          <strong className="font-bold text-primary">{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em className="italic text-gray-300">{children}</em>
+        ),
+        blockquote: ({ children }) => (
+          <blockquote className="border-l border-primary bg-surface/30 pl-2.5 py-0.5 my-1.5 text-[11px] italic text-gray-400">
+            {children}
+          </blockquote>
+        )
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+};
+
 
 // ----------------------------------------------------
 // MAIN APP COMPONENT
@@ -569,19 +672,23 @@ export default function Home() {
                   </div>
                 ) : (
                   <div
-                    className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed whitespace-pre-wrap ${
+                    className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-accent/10 border border-accent/20 text-foreground"
+                        ? "bg-accent/10 border border-accent/20 text-foreground whitespace-pre-wrap text-xs"
                         : "bg-surface border border-border text-gray-100"
                     }`}
                   >
-                    {msg.role === "assistant"
-                      ? msg.text.replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
+                    {msg.role === "assistant" ? (
+                      <MarkdownRenderer
+                        content={msg.text.replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
                           const titleMatch = m.match(/title="([^"]+)"/);
                           const title = titleMatch ? titleMatch[1] : "Interactive Tool";
                           return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
-                        })
-                      : msg.text}
+                        })}
+                      />
+                    ) : (
+                      msg.text
+                    )}
                   </div>
                 )}
               </div>
