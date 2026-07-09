@@ -458,6 +458,20 @@ export default function Home() {
     setExpandedLogs({}); // clear expanded states
 
     const assistantMsgId = `assistant-${Date.now()}`;
+    
+    const updateToolLogs = (updater: ToolLog[] | ((prev: ToolLog[]) => ToolLog[])) => {
+      setToolLogs((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        setMessages((prevMsgs) =>
+          prevMsgs.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, toolLogs: next }
+              : m
+          )
+        );
+        return next;
+      });
+    };
     setMessages((prev) => [
       ...prev,
       {
@@ -533,11 +547,11 @@ export default function Home() {
                 status: "running",
                 timestamp: new Date().toLocaleTimeString()
               };
-              setToolLogs((prev) => [...prev, newLog]);
+              updateToolLogs((prev) => [...prev, newLog]);
             }
 
             if (data.type === "llm_turn_summary") {
-              setToolLogs((prev) =>
+              updateToolLogs((prev) =>
                 prev.map((log) =>
                   log.id === data.id
                     ? {
@@ -553,6 +567,19 @@ export default function Home() {
 
             if (data.type === "stream_event" && data.event.type === "tool_use") {
               const toolUse = data.event;
+
+              // Automatically switch to manual tab and correct page if read_pages is called
+              if (toolUse.name === "read_pages") {
+                const { source, pages } = toolUse.input || {};
+                if (source) {
+                  setSelectedDoc(source);
+                }
+                if (pages && Array.isArray(pages) && pages.length > 0) {
+                  setSelectedPage(pages[0]);
+                }
+                setActiveRightTab("manual");
+              }
+
               const newLog: ToolLog = {
                 id: toolUse.id || `tool-${Date.now()}`,
                 type: "tool",
@@ -561,11 +588,11 @@ export default function Home() {
                 status: "running",
                 timestamp: new Date().toLocaleTimeString()
               };
-              setToolLogs((prev) => [...prev, newLog]);
+              updateToolLogs((prev) => [...prev, newLog]);
             }
             
             if (data.type === "tool_use_summary") {
-              setToolLogs((prev) =>
+              updateToolLogs((prev) =>
                 prev.map((log) =>
                   log.toolName === data.toolName && log.status === "running"
                     ? {
@@ -708,9 +735,83 @@ export default function Home() {
                     className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${
                       msg.role === "user"
                         ? "bg-accent/10 border border-accent/20 text-foreground whitespace-pre-wrap text-xs"
-                        : "bg-surface border border-border text-gray-100"
+                        : "bg-surface border border-border text-gray-100 w-full md:max-w-[85%]"
                     }`}
                   >
+                    {/* Render tool logs first if role is assistant */}
+                    {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && (
+                      <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
+                        <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
+                          <Cpu className="h-3.5 w-3.5" />
+                          <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
+                        </div>
+                        <div className="space-y-2">
+                          {msg.toolLogs.map((log) => {
+                            const isExpanded = !!expandedLogs[log.id];
+                            return (
+                              <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
+                                <div
+                                  onClick={() => {
+                                    setExpandedLogs((prev) => ({
+                                      ...prev,
+                                      [log.id]: !prev[log.id]
+                                    }));
+                                  }}
+                                  className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                                >
+                                  <div className="flex items-start space-x-2">
+                                    <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
+                                    <span className="font-mono text-[10.5px]">
+                                      {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
+                                      {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
+                                      {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
+                                      <span className="text-primary font-bold">{log.toolName}</span>
+                                      {log.resultSummary && (
+                                        <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="text-gray-500 pl-2">
+                                    {isExpanded ? (
+                                      <LucideIcons.ChevronDown className="h-3 w-3 inline" />
+                                    ) : (
+                                      <LucideIcons.ChevronRight className="h-3 w-3 inline" />
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Collapsible Details Drawer */}
+                                {isExpanded && (
+                                  <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
+                                    <div>
+                                      <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                        {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                                      </span>
+                                      <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
+                                        {typeof log.arguments === "string"
+                                          ? log.arguments
+                                          : JSON.stringify(log.arguments, null, 2)}
+                                      </pre>
+                                    </div>
+                                    {log.rawOutput && (
+                                      <div>
+                                        <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                          {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
+                                        </span>
+                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
+                                          {log.rawOutput}
+                                        </pre>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {msg.role === "assistant" ? (
                       <MarkdownRenderer
                         content={msg.text.replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
@@ -726,80 +827,6 @@ export default function Home() {
                 )}
               </div>
             ))}
-
-            {/* Display Realtime Tool Logs */}
-            {toolLogs.length > 0 && (
-              <div className="rounded border border-border bg-surface/30 p-3 font-mono text-xs text-gray-400 space-y-2 select-none">
-                <div className="flex items-center space-x-2 text-primary border-b border-border/40 pb-1 mb-2">
-                  <Cpu className="h-3.5 w-3.5" />
-                  <span className="font-bold">AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
-                </div>
-                <div className="space-y-2">
-                  {toolLogs.map((log) => {
-                    const isExpanded = !!expandedLogs[log.id];
-                    return (
-                      <div key={log.id} className="border-b border-border/10 pb-2 last:border-b-0">
-                        <div
-                          onClick={() => {
-                            setExpandedLogs((prev) => ({
-                              ...prev,
-                              [log.id]: !prev[log.id]
-                            }));
-                          }}
-                          className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
-                        >
-                          <div className="flex items-start space-x-2">
-                            <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
-                            <span className="font-mono text-[11px]">
-                              {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
-                              {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
-                              {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
-                              <span className="text-primary font-bold">{log.toolName}</span>
-                              {log.resultSummary && (
-                                <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="text-gray-500 pl-2">
-                            {isExpanded ? (
-                              <LucideIcons.ChevronDown className="h-3.5 w-3.5 inline" />
-                            ) : (
-                              <LucideIcons.ChevronRight className="h-3.5 w-3.5 inline" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Collapsible Details Drawer */}
-                        {isExpanded && (
-                          <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2.5 border-l border-primary/30 bg-black/40 rounded text-[11px] select-text">
-                            <div>
-                              <span className="text-accent font-bold uppercase tracking-widest text-[9px] font-mono block">
-                                {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
-                              </span>
-                              <pre className="mt-1 p-2 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[10px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
-                                {typeof log.arguments === "string"
-                                  ? log.arguments
-                                  : JSON.stringify(log.arguments, null, 2)}
-                              </pre>
-                            </div>
-                            {log.rawOutput && (
-                              <div>
-                                <span className="text-success font-bold uppercase tracking-widest text-[9px] font-mono block">
-                                  {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
-                                </span>
-                                <pre className="mt-1 p-2 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[10px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
-                                  {log.rawOutput}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -1006,37 +1033,13 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 font-mono text-xs text-gray-300 leading-relaxed bg-black/20">
-                  <div className="max-w-none prose prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-xs bg-transparent border-0 p-0 text-gray-300">
-                      {pageTextContent}
-                    </pre>
-                  </div>
-
-                  {extractedMetadata &&
-                    extractedMetadata[selectedDoc] &&
-                    extractedMetadata[selectedDoc].pages[selectedPage - 1]?.images?.length > 0 && (
-                      <div className="mt-6 border-t border-border/40 pt-4">
-                        <div className="flex items-center space-x-2 text-primary font-mono text-xs mb-3">
-                          <ImageIcon className="h-4 w-4" />
-                          <span>PAGE IMAGE ASSETS</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {extractedMetadata[selectedDoc].pages[selectedPage - 1].images.map((img: any) => (
-                            <div key={img.url} className="rounded border border-border bg-black/60 p-2 text-center">
-                              <img
-                                src={img.url}
-                                alt={`Page asset ${img.index}`}
-                                className="max-h-36 mx-auto object-contain bg-white/5 rounded"
-                              />
-                              <div className="text-[10px] text-gray-500 font-mono mt-2">
-                                Asset {img.index} • {img.filename}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                <div className="flex-1 bg-white overflow-hidden relative w-full h-full">
+                  <iframe
+                    src={`/extracted/pdf/${selectedDoc}/page_${selectedPage}.pdf#toolbar=0&navpanes=0`}
+                    className="w-full h-full border-0 absolute inset-0"
+                    title={`PDF Viewer - ${selectedDoc} Page ${selectedPage}`}
+                    key={`${selectedDoc}-${selectedPage}`}
+                  />
                 </div>
               </div>
             )}
