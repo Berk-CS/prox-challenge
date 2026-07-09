@@ -87,7 +87,7 @@ const SandpackErrorListener = ({
   onSuccess?: () => void;
   isLoading: boolean;
 }) => {
-  const { sandpack } = useSandpack();
+  const { sandpack, listen } = useSandpack();
 
   useEffect(() => {
     // Guard: Only process compilation errors / success once streaming has completed
@@ -95,12 +95,48 @@ const SandpackErrorListener = ({
 
     if (sandpack.error) {
       onError(sandpack.error.message);
-    } else if (sandpack.status === "done") {
-      onSuccess?.();
+      return;
     }
-  }, [sandpack.error, sandpack.status, isLoading, onError, onSuccess]);
+
+    // Subscribe to bundler messaging
+    const unsubscribe = listen((message: any) => {
+      if (message.type === "done") {
+        onSuccess?.();
+      }
+    });
+
+    // Also fallback: if status is already running or done, trigger success
+    if (sandpack.status === "done" || sandpack.status === "running") {
+      const timer = setTimeout(() => {
+        if (!sandpack.error) {
+          onSuccess?.();
+        }
+      }, 1000);
+      return () => {
+        unsubscribe();
+        clearTimeout(timer);
+      };
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, [sandpack.error, sandpack.status, listen, isLoading, onError, onSuccess]);
 
   return null;
+};
+
+const SandpackLoadingOverlay = ({ isCompiling }: { isCompiling: boolean }) => {
+  if (!isCompiling) return null;
+
+  return (
+    <div className="absolute inset-0 bg-[#0c0c0e]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center space-y-3 select-none">
+      <Loader2 className="h-6 w-6 text-primary animate-spin" />
+      <span className="font-mono text-[10px] text-gray-400 uppercase tracking-widest animate-pulse">
+        Compiling Interactive Component...
+      </span>
+    </div>
+  );
 };
 
 const SandpackSandbox = ({ 
@@ -114,10 +150,21 @@ const SandpackSandbox = ({
   onSuccess: () => void; 
   isLoading: boolean; 
 }) => {
+  const [hasCompiledOnce, setHasCompiledOnce] = useState(false);
   const preparedCode = useMemo(() => prepareCodeForSandpack(code), [code]);
 
+  const handleSuccess = useCallback(() => {
+    setHasCompiledOnce(true);
+    onSuccess();
+  }, [onSuccess]);
+
+  const handleError = useCallback((err: string) => {
+    setHasCompiledOnce(true);
+    onError(err);
+  }, [onError]);
+
   return (
-    <div key={preparedCode} className="w-full h-[550px] border border-border rounded overflow-hidden bg-[#111] shadow-inner">
+    <div className="relative w-full h-[550px] border border-border rounded overflow-hidden bg-[#111] shadow-inner">
       <SandpackProvider
         template="react"
         theme="dark"
@@ -131,7 +178,8 @@ const SandpackSandbox = ({
           }
         }}
       >
-        <SandpackErrorListener onError={onError} onSuccess={onSuccess} isLoading={isLoading} />
+        <SandpackErrorListener onError={handleError} onSuccess={handleSuccess} isLoading={isLoading} />
+        <SandpackLoadingOverlay isCompiling={!hasCompiledOnce} />
         <SandpackPreview style={{ height: "550px" }} showNavigator={false} showRestartButton={true} />
       </SandpackProvider>
     </div>
@@ -364,8 +412,15 @@ export default function Home() {
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
   
   // Artifacts State
-  const [artifacts, setArtifacts] = useState<Record<string, ExtractedArtifact>>({});
-  const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
+  const [artifacts, setArtifacts] = useState<Record<string, ExtractedArtifact>>({
+    "custom-artifact": {
+      id: "custom-artifact",
+      title: "Custom Component",
+      type: "react",
+      content: `import React from "react";\nimport { Zap } from "lucide-react";\n\nexport default function App() {\n  return (\n    <div style={{\n      minHeight: "100vh",\n      background: "#0b0e12",\n      color: "#e5e7eb",\n      fontFamily: "system-ui, sans-serif",\n      display: "flex",\n      alignItems: "center",\n      justifyContent: "center",\n      padding: 24,\n      boxSizing: "border-box"\n    }}>\n      <div style={{\n        maxWidth: 400,\n        width: "100%",\n        background: "linear-gradient(180deg, #111827 0%, #0b1220 100%)",\n        border: "1px solid rgba(245, 158, 11, 0.25)",\n        borderRadius: 20,\n        boxShadow: "0 20px 50px rgba(0,0,0,0.5)",\n        padding: "40px 24px",\n        textAlign: "center"\n      }}>\n        <div style={{\n          width: 56,\n          height: 56,\n          borderRadius: 14,\n          background: "#1e293b",\n          border: "1px solid #fbbf24",\n          color: "#fbbf24",\n          display: "grid",\n          placeItems: "center",\n          margin: "0 auto 20px"\n        }}>\n          <Zap size={24} />\n        </div>\n\n        <h1 style={{ margin: "0 0 12px 0", fontSize: 24, fontWeight: 800, color: "#fff" }}>\n          Welcome to Your Workspace\n        </h1>\n        \n        <p style={{ margin: 0, fontSize: 14, color: "#9ca3af", lineHeight: 1.5 }}>\n          This interactive area lets you view, calculate, and adjust tool settings generated by the AI assistant in real time.\n        </p>\n      </div>\n    </div>\n  );\n}`
+    }
+  });
+  const [activeArtifactId, setActiveArtifactId] = useState<string | null>("custom-artifact");
 
   // Sandbox retry and error states
   const [retryCount, setRetryCount] = useState<number>(0);
@@ -374,6 +429,41 @@ export default function Home() {
   // Settings and mode states
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(true);
+
+  // Local code editor state and copied state
+  const [localCode, setLocalCode] = useState<string>(" ");
+  const [copied, setCopied] = useState<boolean>(false);
+
+  useEffect(() => {
+    const currentContent = activeArtifactId && artifacts[activeArtifactId] ? artifacts[activeArtifactId].content : "";
+    setLocalCode(currentContent);
+  }, [activeArtifactId, activeArtifactId && artifacts[activeArtifactId] ? artifacts[activeArtifactId].content : ""]);
+
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedUpdateArtifact = useCallback((newContent: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      if (!activeArtifactId) return;
+      setArtifacts((prev) => ({
+        ...prev,
+        [activeArtifactId]: {
+          ...prev[activeArtifactId],
+          content: newContent
+        }
+      }));
+    }, 1000);
+  }, [activeArtifactId]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Manual viewer state
   const [selectedDoc, setSelectedDoc] = useState<string>("owner-manual");
@@ -1023,7 +1113,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" />
-                <span>WORKSPACE PREVIEW</span>
+                <span>ARTIFACT</span>
               </button>
               <button
                 onClick={() => setActiveRightTab("manual")}
@@ -1053,6 +1143,28 @@ Please analyze this error, fix your code, and output the entire corrected React 
                         <span className="text-[10px] text-gray-600 bg-black/35 px-2 py-0.5 rounded border border-border">
                           {activeArtifact.type}
                         </span>
+
+                        <button
+                          onClick={async () => {
+                            if (!activeArtifact) return;
+                            await navigator.clipboard.writeText(activeArtifact.content);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          className="flex items-center space-x-1 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
+                        >
+                          {copied ? (
+                            <>
+                              <LucideIcons.CheckCircle className="h-3 w-3 text-success animate-pulse" />
+                              <span className="text-success font-bold text-[9px]">Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <LucideIcons.FileText className="h-3 w-3" />
+                              <span className="text-[9px]">Copy Code</span>
+                            </>
+                          )}
+                        </button>
                         
                         <div className="flex rounded border border-border overflow-hidden">
                           <button
@@ -1074,8 +1186,11 @@ Please analyze this error, fix your code, and output the entire corrected React 
                     <div className="flex-1 overflow-auto p-4 bg-black/20">
                       {previewSubTab === "code" ? (
                         <textarea
-                          value={activeArtifact.content}
-                          onChange={(e) => handleArtifactContentChange(e.target.value)}
+                          value={localCode}
+                          onChange={(e) => {
+                            setLocalCode(e.target.value);
+                            debouncedUpdateArtifact(e.target.value);
+                          }}
                           className="w-full min-h-[500px] flex-1 font-mono text-xs text-primary bg-black/35 p-3 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
                         />
                       ) : (
@@ -1119,6 +1234,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                                 {/* Dispatcher by type */}
                                 {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
                                   <SandpackSandbox 
+                                    key={activeArtifact.id}
                                     code={activeArtifact.content} 
                                     onError={handleAutoRetry} 
                                     onSuccess={handleSandboxSuccess} 

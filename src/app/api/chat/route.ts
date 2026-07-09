@@ -6,12 +6,12 @@ import * as path from "path";
 export const dynamic = "force-dynamic";
 
 
-const OPENAI_MODEL = "gpt-4o";
+const OPENAI_MODEL = "gpt-5.4";
 
 // Tool schemas for the OpenAI Chat Completions API
 const tools = [
   {
-    type: "function" as const,
+    type: "function" as const
     function: {
       name: "read_pages",
       description: "Reads the content of specified page-level markdown files for a given manual source.",
