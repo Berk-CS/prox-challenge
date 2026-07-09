@@ -28,11 +28,13 @@ import remarkGfm from "remark-gfm";
 
 interface ToolLog {
   id: string;
+  type?: "tool" | "llm_turn";
   toolName: string;
   arguments: any;
   status: "running" | "completed" | "failed";
   timestamp: string;
   resultSummary?: string;
+  rawOutput?: string;
 }
 
 interface Message {
@@ -336,6 +338,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
   
   // Tab State
@@ -452,6 +455,7 @@ export default function Home() {
     setInput("");
     setIsLoading(true);
     setToolLogs([]); // clear logs
+    setExpandedLogs({}); // clear expanded states
 
     const assistantMsgId = `assistant-${Date.now()}`;
     setMessages((prev) => [
@@ -520,10 +524,38 @@ export default function Home() {
               }
             }
             
+            if (data.type === "llm_turn") {
+              const newLog: ToolLog = {
+                id: data.id,
+                type: "llm_turn",
+                toolName: `LLM Completion (Turn ${data.id.split("-").pop()})`,
+                arguments: data.input,
+                status: "running",
+                timestamp: new Date().toLocaleTimeString()
+              };
+              setToolLogs((prev) => [...prev, newLog]);
+            }
+
+            if (data.type === "llm_turn_summary") {
+              setToolLogs((prev) =>
+                prev.map((log) =>
+                  log.id === data.id
+                    ? {
+                        ...log,
+                        status: "completed",
+                        resultSummary: `Received output (${data.output.length} characters)`,
+                        rawOutput: data.output
+                      }
+                    : log
+                )
+              );
+            }
+
             if (data.type === "stream_event" && data.event.type === "tool_use") {
               const toolUse = data.event;
               const newLog: ToolLog = {
                 id: toolUse.id || `tool-${Date.now()}`,
+                type: "tool",
                 toolName: toolUse.name,
                 arguments: toolUse.input,
                 status: "running",
@@ -535,11 +567,12 @@ export default function Home() {
             if (data.type === "tool_use_summary") {
               setToolLogs((prev) =>
                 prev.map((log) =>
-                  log.toolName === data.toolName
+                  log.toolName === data.toolName && log.status === "running"
                     ? {
                         ...log,
                         status: data.isError ? "failed" : "completed",
-                        resultSummary: data.summary
+                        resultSummary: data.summary,
+                        rawOutput: data.result
                       }
                     : log
                 )
@@ -696,28 +729,75 @@ export default function Home() {
 
             {/* Display Realtime Tool Logs */}
             {toolLogs.length > 0 && (
-              <div className="rounded border border-border bg-surface/30 p-3 font-mono text-xs text-gray-400 space-y-2">
+              <div className="rounded border border-border bg-surface/30 p-3 font-mono text-xs text-gray-400 space-y-2 select-none">
                 <div className="flex items-center space-x-2 text-primary border-b border-border/40 pb-1 mb-2">
                   <Cpu className="h-3.5 w-3.5" />
-                  <span className="font-bold">AGENT RUNTIME LOGS</span>
+                  <span className="font-bold">AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
                 </div>
-                {toolLogs.map((log) => (
-                  <div key={log.id} className="flex items-start space-x-2 font-mono">
-                    <span className="text-gray-500">[{log.timestamp}]</span>
-                    <span>
-                      {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
-                      {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
-                      {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
-                      <span className="text-primary font-bold">{log.toolName}</span>:{" "}
-                      <span className="text-gray-300 text-[11px]">{JSON.stringify(log.arguments)}</span>
-                      {log.resultSummary && (
-                        <div className="text-[10px] text-gray-500 pl-4 mt-0.5 border-l border-border/30">
-                          ➔ {log.resultSummary}
+                <div className="space-y-2">
+                  {toolLogs.map((log) => {
+                    const isExpanded = !!expandedLogs[log.id];
+                    return (
+                      <div key={log.id} className="border-b border-border/10 pb-2 last:border-b-0">
+                        <div
+                          onClick={() => {
+                            setExpandedLogs((prev) => ({
+                              ...prev,
+                              [log.id]: !prev[log.id]
+                            }));
+                          }}
+                          className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                        >
+                          <div className="flex items-start space-x-2">
+                            <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
+                            <span className="font-mono text-[11px]">
+                              {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
+                              {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
+                              {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
+                              <span className="text-primary font-bold">{log.toolName}</span>
+                              {log.resultSummary && (
+                                <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="text-gray-500 pl-2">
+                            {isExpanded ? (
+                              <LucideIcons.ChevronDown className="h-3.5 w-3.5 inline" />
+                            ) : (
+                              <LucideIcons.ChevronRight className="h-3.5 w-3.5 inline" />
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </span>
-                  </div>
-                ))}
+
+                        {/* Collapsible Details Drawer */}
+                        {isExpanded && (
+                          <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2.5 border-l border-primary/30 bg-black/40 rounded text-[11px] select-text">
+                            <div>
+                              <span className="text-accent font-bold uppercase tracking-widest text-[9px] font-mono block">
+                                {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                              </span>
+                              <pre className="mt-1 p-2 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[10px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
+                                {typeof log.arguments === "string"
+                                  ? log.arguments
+                                  : JSON.stringify(log.arguments, null, 2)}
+                              </pre>
+                            </div>
+                            {log.rawOutput && (
+                              <div>
+                                <span className="text-success font-bold uppercase tracking-widest text-[9px] font-mono block">
+                                  {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
+                                </span>
+                                <pre className="mt-1 p-2 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[10px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
+                                  {log.rawOutput}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
             <div ref={chatEndRef} />

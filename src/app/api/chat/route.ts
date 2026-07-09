@@ -207,6 +207,19 @@ MULTIMODAL RESPONSES (ARTIFACTS):
             iterations++;
             console.log(`Agent Loop Turn ${iterations}`);
 
+            // Send LLM turn start log to client
+            const lastMsg = apiMessages.filter(m => m.role === "user").pop();
+            const turnInput = lastMsg 
+              ? `Prompting ${OPENAI_MODEL} with context (last query: "${lastMsg.content.slice(0, 100)}...") [Messages History Length: ${apiMessages.length}]`
+              : `Prompting ${OPENAI_MODEL} (Turn ${iterations}) [Messages History Length: ${apiMessages.length}]`;
+            
+            sendEvent({
+              type: "llm_turn",
+              id: `llm-turn-${iterations}`,
+              input: turnInput,
+              status: "running"
+            });
+
             const responseStream = await client.chat.completions.create({
               model: OPENAI_MODEL,
               messages: apiMessages,
@@ -262,6 +275,17 @@ MULTIMODAL RESPONSES (ARTIFACTS):
             }
 
             const toolCalls = toolCallsAccumulator.filter(tc => tc !== undefined && tc.name !== "");
+
+            // Send LLM completion turn summary
+            const summaryText = assistantText 
+              ? assistantText 
+              : (toolCalls.length ? `[Requested tool calls: ${toolCalls.map(tc => tc.name).join(", ")}]` : "[No content returned]");
+            
+            sendEvent({
+              type: "llm_turn_summary",
+              id: `llm-turn-${iterations}`,
+              output: summaryText
+            });
 
             if (toolCalls.length > 0) {
               console.log("Executing tools:", toolCalls);
@@ -341,12 +365,13 @@ MULTIMODAL RESPONSES (ARTIFACTS):
                   content: result
                 });
 
-                // Stream tool summary
+                // Stream tool summary with full result
                 sendEvent({
                   type: "tool_use_summary",
                   toolName: tc.name,
                   isError: isError,
-                  summary: summary
+                  summary: summary,
+                  result: result
                 });
               }
 
