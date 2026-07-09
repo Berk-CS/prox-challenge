@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import * as Recharts from "recharts";
-import { useRunner } from "react-runner";
+import { SandpackProvider, SandpackPreview } from "@codesandbox/sandpack-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -55,86 +55,94 @@ interface ExtractedArtifact {
 // ----------------------------------------------------
 // SANDBOX 1: React Component Runner
 // ----------------------------------------------------
-const ReactRunnerSandbox = ({ code }: { code: string }) => {
-  const processedCode = React.useMemo(() => {
-    let processed = code;
-    
-    // Strip react imports
-    processed = processed.replace(/import\s+React\b[\s\S]*?\s+from\s+['"]react['"];?/g, "");
-    processed = processed.replace(/import\s+{[\s\S]*?}\s+from\s+['"]react['"];?/g, "");
-    
-    // Strip lucide-react and recharts imports
-    processed = processed.replace(/import\s+[\s\S]*?\s+from\s+['"](?:lucide-react|lucid3-react)['"];?/g, "");
-    processed = processed.replace(/import\s+[\s\S]*?\s+from\s+['"]recharts['"];?/g, "");
-    
-    // Clean up default exports to align with react-runner's render expectation
-    const funcMatch = processed.match(/export\s+default\s+function\s+(\w+)/);
-    const varMatch = processed.match(/export\s+default\s+(\w+)\s*;/);
-    const arrowMatch = processed.includes("export default");
-
-    if (funcMatch) {
-      const name = funcMatch[1];
-      processed = processed.replace(/export\s+default\s+function/g, "function");
-      processed += `\nrender(<${name} />);`;
-    } else if (varMatch) {
-      const name = varMatch[1];
-      processed = processed.replace(/export\s+default\s+(\w+)\s*;/g, "");
-      processed += `\nrender(<${name} />);`;
-    } else if (arrowMatch && !processed.includes("render(")) {
-      processed = processed.replace(/export\s+default/g, "const TempComponent =");
-      processed += `\nrender(<TempComponent />);`;
+function prepareCodeForSandpack(rawCode: string): string {
+  if (!rawCode) return "";
+  
+  // 1. Strip any existing import statements
+  let cleanCode = rawCode.replace(/import\s+[\s\S]*?from\s+['"].*?['"];?/g, "");
+  
+  // 2. Strip any existing export default statements
+  let name = "";
+  const funcMatch = cleanCode.match(/export\s+default\s+function\s+(\w+)/);
+  if (funcMatch) {
+    name = funcMatch[1];
+    cleanCode = cleanCode.replace(/export\s+default\s+function/g, "function");
+  } else {
+    const varMatch = cleanCode.match(/export\s+default\s+(\w+)\s*;/);
+    if (varMatch) {
+      name = varMatch[1];
+      cleanCode = cleanCode.replace(/export\s+default\s+(\w+)\s*;/g, "");
+    } else {
+      const arrowMatch = cleanCode.includes("export default");
+      if (arrowMatch) {
+        cleanCode = cleanCode.replace(/export\s+default/g, "const TempComponent =");
+        name = "TempComponent";
+      }
     }
-    
-    return processed.trim();
-  }, [code]);
-
-  const { element, error } = useRunner({
-    code: processedCode,
-    scope: {
-      ...React,
-      React,
-      useState,
-      useEffect,
-      useMemo,
-      useCallback,
-      useRef,
-      useReducer,
-      useContext,
-      ...LucideIcons, // expose Camera, Wrench, etc directly
-      ...Recharts,    // expose ResponsiveContainer, LineChart directly
-      import: {
-        react: {
-          ...React,
-          default: React,
-          useState,
-          useEffect,
-          useMemo,
-          useCallback,
-          useRef,
-          useReducer,
-          useContext,
-        },
-        "lucide-react": LucideIcons,
-        "lucid3-react": LucideIcons,
-        recharts: Recharts,
-      },
-    },
-  });
-
-
-
-  if (error) {
-    return (
-      <div className="rounded border border-error/20 bg-error/5 p-4 font-mono text-xs text-error">
-        <h4 className="font-black text-xs uppercase mb-1">Compilation Failure:</h4>
-        <pre className="whitespace-pre-wrap select-text">{error}</pre>
-      </div>
-    );
+  }
+  
+  // If no name found from export default, auto-detect PascalCase component name
+  if (!name) {
+    const anyFuncMatch = cleanCode.match(/(?:function|const|let|var)\s+([A-Z]\w+)/);
+    if (anyFuncMatch) {
+      name = anyFuncMatch[1];
+    }
   }
 
+  // 3. Scan for Lucide Icons
+  const lucideIconsList = [
+    "Wrench", "Settings", "BookOpen", "Terminal", "Cpu", "Layers", "Send", "Loader2",
+    "FileText", "AlertTriangle", "Flame", "CheckCircle", "Code", "Eye", "RefreshCw",
+    "Play", "Sparkles", "Clock", "ArrowRight", "ChevronRight", "ChevronDown", "Camera",
+    "Zap", "Info", "HelpCircle", "AlertCircle", "Sliders", "Activity", "Clock3"
+  ];
+  const usedIcons = lucideIconsList.filter(icon => new RegExp(`\\b${icon}\\b`).test(cleanCode));
+  const lucideImport = usedIcons.length > 0 
+    ? `import { ${usedIcons.join(', ')} } from 'lucide-react';`
+    : '';
+
+  // 4. Scan for Recharts Components
+  const rechartsList = [
+    "ResponsiveContainer", "LineChart", "Line", "BarChart", "Bar", "PieChart", "Pie",
+    "AreaChart", "Area", "XAxis", "YAxis", "CartesianGrid", "Tooltip", "Legend", "Cell"
+  ];
+  const usedRecharts = rechartsList.filter(comp => new RegExp(`\\b${comp}\\b`).test(cleanCode));
+  const rechartsImport = usedRecharts.length > 0
+    ? `import { ${usedRecharts.join(', ')} } from 'recharts';`
+    : '';
+
+  const exportDefault = name ? `export default ${name};` : '';
+
+  return `import React, { useState, useEffect, useMemo, useCallback, useRef, useReducer, useContext } from 'react';
+${lucideImport}
+${rechartsImport}
+
+${cleanCode.trim()}
+
+${exportDefault}
+`.trim();
+}
+
+const SandpackSandbox = ({ code }: { code: string }) => {
+  const preparedCode = useMemo(() => prepareCodeForSandpack(code), [code]);
+
   return (
-    <div className="p-4 bg-surface rounded border border-border shadow-inner max-h-[550px] overflow-y-auto">
-      {element}
+    <div key={preparedCode} className="w-full h-[550px] border border-border rounded overflow-hidden bg-[#111] shadow-inner">
+      <SandpackProvider
+        template="react"
+        theme="dark"
+        files={{
+          "/App.js": preparedCode,
+        }}
+        customSetup={{
+          dependencies: {
+            "lucide-react": "latest",
+            "recharts": "latest"
+          }
+        }}
+      >
+        <SandpackPreview style={{ height: "550px" }} showNavigator={false} showRestartButton={true} />
+      </SandpackProvider>
     </div>
   );
 };
@@ -458,6 +466,17 @@ export default function Home() {
         }
       }
     }
+  };
+
+  const handleArtifactContentChange = (content: string) => {
+    if (!activeArtifactId) return;
+    setArtifacts((prev) => ({
+      ...prev,
+      [activeArtifactId]: {
+        ...prev[activeArtifactId],
+        content: content
+      }
+    }));
   };
 
   const handleSend = async () => {
@@ -966,9 +985,11 @@ export default function Home() {
                     
                     <div className="flex-1 overflow-auto p-4 bg-black/20">
                       {previewSubTab === "code" ? (
-                        <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-primary bg-black/35 p-3 rounded border border-border overflow-auto max-h-[500px]">
-                          <code>{activeArtifact.content}</code>
-                        </pre>
+                        <textarea
+                          value={activeArtifact.content}
+                          onChange={(e) => handleArtifactContentChange(e.target.value)}
+                          className="w-full min-h-[500px] flex-1 font-mono text-xs text-primary bg-black/35 p-3 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
+                        />
                       ) : (
                         <div className="h-full">
                           {/* Live render condition */}
@@ -986,7 +1007,7 @@ export default function Home() {
                             <div className="space-y-4">
                               {/* Dispatcher by type */}
                               {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
-                                <ReactRunnerSandbox code={activeArtifact.content} />
+                                <SandpackSandbox code={activeArtifact.content} />
                               )}
                               
                               {activeArtifact.type.toLowerCase().includes("mermaid") && (
