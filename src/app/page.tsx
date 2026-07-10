@@ -592,25 +592,12 @@ export default function Home() {
 
     const assistantMsgId = `assistant-${Date.now()}`;
     
-    const updateToolLogs = (updater: ToolLog[] | ((prev: ToolLog[]) => ToolLog[])) => {
-      setToolLogs((prev) => {
-        const next = typeof updater === "function" ? updater(prev) : updater;
-        setMessages((prevMsgs) =>
-          prevMsgs.map((m) =>
-            m.id === assistantMsgId
-              ? { ...m, toolLogs: next }
-              : m
-          )
-        );
-        return next;
-      });
-    };
     setMessages((prev) => [
       ...prev,
       {
         id: assistantMsgId,
         role: "assistant",
-        text: "",
+        text: "Thinking...",
         timestamp: new Date().toLocaleTimeString(),
         toolLogs: []
       }
@@ -631,155 +618,41 @@ export default function Home() {
         throw new Error(errorData.error || `HTTP Error: ${response.status}`);
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantText = "";
+      const data = await response.json();
       
-      if (!reader) throw new Error("Response body is not readable");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, text: data.text, toolLogs: data.toolLogs }
+            : m
+        )
+      );
 
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      setToolLogs(data.toolLogs || []);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6);
-          if (!jsonStr) continue;
-
-          try {
-            const data = JSON.parse(jsonStr);
-            
-            if (data.type === "stream_event") {
-              const event = data.event;
-              
-              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                assistantText += event.delta.text;
-                
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMsgId
-                      ? { ...m, text: assistantText }
-                      : m
-                  )
-                );
-                
-                parseArtifacts(assistantText);
-              }
-            }
-            
-            if (data.type === "llm_turn") {
-              const newLog: ToolLog = {
-                id: data.id,
-                type: "llm_turn",
-                toolName: `LLM Completion (Turn ${data.id.split("-").pop()})`,
-                arguments: data.input,
-                status: "running",
-                timestamp: new Date().toLocaleTimeString()
-              };
-              updateToolLogs((prev) => [...prev, newLog]);
-            }
-
-            if (data.type === "llm_turn_summary") {
-              updateToolLogs((prev) =>
-                prev.map((log) =>
-                  log.id === data.id
-                    ? {
-                        ...log,
-                        status: "completed",
-                        resultSummary: `Received output (${data.output.length} characters)`,
-                        rawOutput: data.output
-                      }
-                    : log
-                )
-              );
-            }
-
-            if (data.type === "stream_event" && data.event.type === "tool_use") {
-              const toolUse = data.event;
-
-              // Automatically switch to manual tab and correct page if read_pages is called
-              if (toolUse.name === "read_pages") {
-                const { source, pages } = toolUse.input || {};
-                if (source) {
-                  setSelectedDoc(source);
-                }
-                if (pages && Array.isArray(pages) && pages.length > 0) {
-                  setSelectedPage(pages[0]);
-                }
-                setActiveTab("manual");
-              }
-
-              const newLog: ToolLog = {
-                id: toolUse.id || `tool-${Date.now()}`,
-                type: "tool",
-                toolName: toolUse.name,
-                arguments: toolUse.input,
-                status: "running",
-                timestamp: new Date().toLocaleTimeString()
-              };
-              updateToolLogs((prev) => [...prev, newLog]);
-            }
-            
-            if (data.type === "tool_use_summary") {
-              updateToolLogs((prev) =>
-                prev.map((log) =>
-                  log.toolName === data.toolName && log.status === "running"
-                    ? {
-                        ...log,
-                        status: data.isError ? "failed" : "completed",
-                        resultSummary: data.summary,
-                        rawOutput: data.result
-                      }
-                    : log
-                )
-              );
-            }
-            
-            if (data.type === "assistant" && data.message.content) {
-              const textBlock = data.message.content.find((b: any) => b.type === "text");
-              if (textBlock && textBlock.text) {
-                assistantText = textBlock.text;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMsgId
-                      ? { ...m, text: assistantText }
-                      : m
-                  )
-                );
-                parseArtifacts(assistantText);
-              }
-            }
-
-            if (data.type === "system" && data.subtype === "error") {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantMsgId
-                    ? {
-                        ...m,
-                        text: assistantText + `\n\n[ERROR: ${data.message}]`
-                      }
-                    : m
-                )
-              );
-            }
-          } catch (e) {
-            // Ignore incomplete chunk errors
-          }
+      if (data.toolLogs) {
+        const readPagesTool = data.toolLogs.find((t: ToolLog) => t.toolName === "read_pages");
+        if (readPagesTool) {
+          const { source, pages } = readPagesTool.arguments || {};
+          if (source) setSelectedDoc(source);
+          if (pages && Array.isArray(pages) && pages.length > 0) setSelectedPage(pages[0]);
+          setActiveTab("manual");
         }
       }
-    } catch (err: any) {
-      console.error("Stream reader error:", err);
+
+      if (data.text) {
+        parseArtifacts(data.text);
+      }
+
+    } catch (err: unknown) {
+      console.error("Chat error:", err);
+      const errorMsg = err instanceof Error ? err.message : "Request failed";
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
             ? {
                 ...m,
-                text: m.text + `\n\n[Disconnected: ${err.message || "Connection timed out"}]`
+                text: `[Error: ${errorMsg}]`
               }
             : m
         )

@@ -7,7 +7,7 @@ import * as path from "path";
 export const dynamic = "force-dynamic";
 
 
-const OPENAI_MODEL = "gpt-5.4";
+const OPENAI_MODEL = "gpt-5.4-mini";
 
 // Tool schemas for the OpenAI Chat Completions API
 const tools = [
@@ -197,529 +197,298 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
 `;
 
     const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
+
+    let finalAssistantText = "";
+    let toolLogs: any[] = [];
+
     if (isAnthropic) {
-      const encoder = new TextEncoder();
-      const responseStream = new ReadableStream({
-        async start(controller) {
-          const sendEvent = (data: any) => {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-          };
-
-          try {
-            const client = new Anthropic({
-              apiKey: process.env.ANTHROPIC_API_KEY
-            });
-
-            // Formulate full message history for Anthropic
-            const apiMessages: any[] = [];
-            for (const m of messages) {
-              if (m.role === "system") continue;
-              apiMessages.push({
-                role: m.role === "user" ? "user" : "assistant",
-                content: m.text || m.content || ""
-              });
-            }
-
-            const anthropicTools: Anthropic.Messages.Tool[] = [
-              {
-                name: "read_pages",
-                description: "Reads the content of specified page-level markdown files for a given manual source.",
-                input_schema: {
-                  type: "object",
-                  properties: {
-                    source: {
-                      type: "string",
-                      enum: ["owner-manual", "quick-start-guide", "selection-chart"],
-                      description: "The source manual to read from."
-                    },
-                    pages: {
-                      type: "array",
-                      items: {
-                        type: "integer"
-                      },
-                      description: "An array of page numbers to load."
-                    }
-                  },
-                  required: ["source", "pages"]
-                }
-              },
-              {
-                name: "grep",
-                description: "Searches for a keyword or phrase across all page markdown files.",
-                input_schema: {
-                  type: "object",
-                  properties: {
-                    query: {
-                      type: "string",
-                      description: "The exact search term or phrase to look for."
-                    },
-                    source: {
-                      type: "string",
-                      enum: ["owner-manual", "quick-start-guide", "selection-chart"],
-                      description: "Optional source filter. If omitted, searches all manuals."
-                    }
-                  },
-                  required: ["query"]
-                }
-              }
-            ];
-
-            let keepRunning = true;
-            let iterations = 0;
-            const maxIterations = 5;
-
-            while (keepRunning && iterations < maxIterations) {
-              iterations++;
-              console.log(`Claude Agent Loop Turn ${iterations}`);
-
-              const lastMsg = apiMessages.filter(m => m.role === "user").pop();
-              const turnInput = lastMsg
-                ? `Prompting Claude with context (last query: "${lastMsg.content.slice(0, 100)}...") [Messages History Length: ${apiMessages.length}]`
-                : `Prompting Claude (Turn ${iterations}) [Messages History Length: ${apiMessages.length}]`;
-
-              sendEvent({
-                type: "llm_turn",
-                id: `llm-turn-${iterations}`,
-                input: turnInput,
-                status: "running"
-              });
-
-              const responseStream = await client.messages.create({
-                model: "claude-opus-4-8",
-                max_tokens: 4096,
-                system: SYSTEM_PROMPT,
-                messages: apiMessages,
-                tools: anthropicTools,
-                stream: true
-              });
-
-              let assistantText = "";
-              let toolCallsAccumulator: any[] = [];
-
-              for await (const chunk of responseStream) {
-                if (chunk.type === "content_block_start") {
-                  if (chunk.content_block.type === "tool_use") {
-                    toolCallsAccumulator.push({
-                      id: chunk.content_block.id,
-                      name: chunk.content_block.name,
-                      input: ""
-                    });
-                  }
-                } else if (chunk.type === "content_block_delta") {
-                  const delta = chunk.delta;
-                  if (delta.type === "text_delta") {
-                    assistantText += delta.text;
-                    sendEvent({
-                      type: "stream_event",
-                      event: {
-                        type: "content_block_delta",
-                        delta: {
-                          type: "text_delta",
-                          text: delta.text
-                        }
-                      }
-                    });
-                  } else if (delta.type === "input_json_delta") {
-                    const lastToolCall = toolCallsAccumulator[toolCallsAccumulator.length - 1];
-                    if (lastToolCall) {
-                      lastToolCall.input += delta.partial_json;
-                    }
-                  }
-                }
-              }
-
-              const toolCalls = toolCallsAccumulator.map((tc) => {
-                let parsedArgs: any = {};
-                try {
-                  parsedArgs = JSON.parse(tc.input);
-                } catch (e) {
-                  console.error("Failed to parse tool input JSON:", tc.input);
-                }
-                return {
-                  id: tc.id,
-                  name: tc.name,
-                  input: parsedArgs
-                };
-              });
-
-              const summaryText = assistantText
-                ? assistantText
-                : (toolCalls.length ? `[Requested tool calls: ${toolCalls.map(tc => tc.name).join(", ")}]` : "[No content returned]");
-
-              sendEvent({
-                type: "llm_turn_summary",
-                id: `llm-turn-${iterations}`,
-                output: summaryText
-              });
-
-              if (toolCalls.length > 0) {
-                console.log("Executing Claude tools:", toolCalls);
-
-                const assistantContentBlocks: any[] = [];
-                if (assistantText) {
-                  assistantContentBlocks.push({
-                    type: "text",
-                    text: assistantText
-                  });
-                }
-                for (const tc of toolCalls) {
-                  assistantContentBlocks.push({
-                    type: "tool_use",
-                    id: tc.id,
-                    name: tc.name,
-                    input: tc.input
-                  });
-                }
-
-                apiMessages.push({
-                  role: "assistant",
-                  content: assistantContentBlocks
-                });
-
-                const toolResultBlocks: any[] = [];
-
-                for (const tc of toolCalls) {
-                  sendEvent({
-                    type: "stream_event",
-                    event: {
-                      type: "tool_use",
-                      id: tc.id,
-                      name: tc.name,
-                      input: tc.input
-                    }
-                  });
-
-                  let result = "";
-                  let summary = "";
-                  let isError = false;
-
-                  try {
-                    if (tc.name === "read_pages") {
-                      const { source, pages } = tc.input;
-                      if (!source || !pages || !Array.isArray(pages)) {
-                        throw new Error("Missing parameters 'source' or 'pages' in read_pages");
-                      }
-                      const contents = pages.map((p: number) => {
-                        const text = readPage(source, p);
-                        return `--- Page ${p} (${source}) ---\n${text}`;
-                      });
-                      result = contents.join("\n\n");
-                      summary = `Loaded ${pages.length} pages of '${source}': [${pages.join(", ")}]`;
-                    } else if (tc.name === "grep") {
-                      const { query, source } = tc.input;
-                      if (!query) {
-                        throw new Error("Missing parameter 'query' in grep");
-                      }
-                      const matches = runGrep(query, source);
-                      result = JSON.stringify(matches, null, 2);
-                      summary = `Searched for "${query}" across manuals. Found ${matches.length} matches.`;
-                    } else {
-                      throw new Error(`Unknown tool: ${tc.name}`);
-                    }
-                  } catch (err: any) {
-                    console.error(`Tool execution failed for ${tc.name}:`, err);
-                    result = `Error executing tool: ${err.message}`;
-                    summary = `Failed: ${err.message}`;
-                    isError = true;
-                  }
-
-                  toolResultBlocks.push({
-                    type: "tool_result",
-                    tool_use_id: tc.id,
-                    content: result,
-                    is_error: isError
-                  });
-
-                  sendEvent({
-                    type: "tool_use_summary",
-                    toolName: tc.name,
-                    isError: isError,
-                    summary: summary,
-                    result: result
-                  });
-                }
-
-                apiMessages.push({
-                  role: "user",
-                  content: toolResultBlocks
-                });
-
-                keepRunning = true;
-              } else {
-                keepRunning = false;
-
-                sendEvent({
-                  type: "assistant",
-                  message: {
-                    content: [
-                      {
-                        type: "text",
-                        text: assistantText
-                      }
-                    ]
-                  }
-                });
-              }
-            }
-
-          } catch (err: any) {
-            console.error("Claude Agent error:", err);
-            sendEvent({
-              type: "system",
-              subtype: "error",
-              message: err.message || "Unknown error in Claude Agent SDK"
-            });
-          } finally {
-            controller.close();
-          }
-        }
+      const client = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY
       });
 
-      return new NextResponse(responseStream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive"
+      const apiMessages: any[] = [];
+      for (const m of messages) {
+        if (m.role === "system") continue;
+        apiMessages.push({
+          role: m.role === "user" ? "user" : "assistant",
+          content: m.text || m.content || ""
+        });
+      }
+
+      const anthropicTools: Anthropic.Messages.Tool[] = [
+        {
+          name: "read_pages",
+          description: "Reads the content of specified page-level markdown files for a given manual source.",
+          input_schema: {
+            type: "object",
+            properties: {
+              source: {
+                type: "string",
+                enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+                description: "The source manual to read from."
+              },
+              pages: {
+                type: "array",
+                items: {
+                  type: "integer"
+                },
+                description: "An array of page numbers to load."
+              }
+            },
+            required: ["source", "pages"]
+          }
+        },
+        {
+          name: "grep",
+          description: "Searches for a keyword or phrase across all page markdown files.",
+          input_schema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "The exact search term or phrase to look for."
+              },
+              source: {
+                type: "string",
+                enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+                description: "Optional source filter. If omitted, searches all manuals."
+              }
+            },
+            required: ["query"]
+          }
         }
+      ];
+
+      let keepRunning = true;
+      let iterations = 0;
+      const maxIterations = 5;
+
+      while (keepRunning && iterations < maxIterations) {
+        iterations++;
+        console.log(`Claude Agent Loop Turn ${iterations}`);
+
+        toolLogs.push({
+          id: `llm-turn-${iterations}`,
+          type: "llm_turn",
+          toolName: `LLM Completion (Turn ${iterations})`,
+          arguments: "Prompting Claude with context...",
+          status: "completed",
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        const response = await client.messages.create({
+          model: "claude-sonnet-5",
+          max_tokens: 4096,
+          system: SYSTEM_PROMPT,
+          messages: apiMessages,
+          tools: anthropicTools,
+          stream: false
+        });
+
+        let assistantText = "";
+        let toolCalls = [];
+
+        for (const block of response.content) {
+          if (block.type === "text") {
+            assistantText += block.text;
+          } else if (block.type === "tool_use") {
+            toolCalls.push(block);
+          }
+        }
+
+        if (assistantText) {
+          finalAssistantText += assistantText;
+        }
+
+        if (toolCalls.length > 0) {
+          const assistantContentBlocks: any[] = [];
+          if (assistantText) {
+            assistantContentBlocks.push({ type: "text", text: assistantText });
+          }
+          for (const tc of toolCalls) {
+            assistantContentBlocks.push({
+              type: "tool_use",
+              id: tc.id,
+              name: tc.name,
+              input: tc.input
+            });
+          }
+          apiMessages.push({ role: "assistant", content: assistantContentBlocks });
+
+          const toolResultBlocks: any[] = [];
+
+          for (const tc of toolCalls) {
+            let result = "";
+            let summary = "";
+            let isError = false;
+
+            try {
+              if (tc.name === "read_pages") {
+                const { source, pages } = tc.input as any;
+                if (!source || !pages || !Array.isArray(pages)) throw new Error("Missing parameters");
+                const contents = pages.map((p: number) => `--- Page ${p} (${source}) ---\n${readPage(source, p)}`);
+                result = contents.join("\n\n");
+                summary = `Loaded ${pages.length} pages of '${source}'`;
+              } else if (tc.name === "grep") {
+                const { query, source } = tc.input as any;
+                if (!query) throw new Error("Missing parameter 'query'");
+                const matches = runGrep(query, source);
+                result = JSON.stringify(matches, null, 2);
+                summary = `Searched for "${query}". Found ${matches.length} matches.`;
+              } else {
+                throw new Error(`Unknown tool: ${tc.name}`);
+              }
+            } catch (err: any) {
+              result = `Error executing tool: ${err.message}`;
+              summary = `Failed: ${err.message}`;
+              isError = true;
+            }
+
+            toolResultBlocks.push({
+              type: "tool_result",
+              tool_use_id: tc.id,
+              content: result,
+              is_error: isError
+            });
+
+            toolLogs.push({
+              id: tc.id,
+              type: "tool",
+              toolName: tc.name,
+              arguments: tc.input,
+              status: isError ? "failed" : "completed",
+              resultSummary: summary,
+              rawOutput: result,
+              timestamp: new Date().toLocaleTimeString()
+            });
+          }
+          apiMessages.push({ role: "user", content: toolResultBlocks });
+          keepRunning = true;
+        } else {
+          keepRunning = false;
+        }
+      }
+
+      return NextResponse.json({
+        text: finalAssistantText,
+        toolLogs: toolLogs
+      });
+
+    } else {
+      const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 60 * 1000,
+        maxRetries: 3
+      });
+
+      const apiMessages: any[] = [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...messages.map((m: any) => ({
+          role: m.role,
+          content: m.text || m.content || ""
+        }))
+      ];
+
+      let keepRunning = true;
+      let iterations = 0;
+      const maxIterations = 5;
+
+      while (keepRunning && iterations < maxIterations) {
+        iterations++;
+        console.log(`Agent Loop Turn ${iterations}`);
+
+        toolLogs.push({
+          id: `llm-turn-${iterations}`,
+          type: "llm_turn",
+          toolName: `LLM Completion (Turn ${iterations})`,
+          arguments: "Prompting OpenAI with context...",
+          status: "completed",
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        const response = await client.chat.completions.create({
+          model: OPENAI_MODEL,
+          messages: apiMessages,
+          tools: tools,
+          stream: false
+        });
+
+        const choice = response.choices[0];
+        const message = choice.message;
+
+        if (message.content) {
+          finalAssistantText += message.content;
+        }
+
+        const toolCalls = message.tool_calls || [];
+
+        if (toolCalls.length > 0) {
+          apiMessages.push(message);
+
+          for (const tc of toolCalls) {
+            let parsedArgs: any = {};
+            try {
+              parsedArgs = JSON.parse(tc.function.arguments);
+            } catch (e) {
+              console.error("Args parsing failed:", tc.function.arguments);
+            }
+
+            let result = "";
+            let summary = "";
+            let isError = false;
+
+            try {
+              if (tc.function.name === "read_pages") {
+                const { source, pages } = parsedArgs;
+                if (!source || !pages || !Array.isArray(pages)) throw new Error("Missing parameters");
+                const contents = pages.map((p: number) => `--- Page ${p} (${source}) ---\n${readPage(source, p)}`);
+                result = contents.join("\n\n");
+                summary = `Loaded ${pages.length} pages of '${source}'`;
+              } else if (tc.function.name === "grep") {
+                const { query, source } = parsedArgs;
+                if (!query) throw new Error("Missing parameter 'query'");
+                const matches = runGrep(query, source);
+                result = JSON.stringify(matches, null, 2);
+                summary = `Searched for "${query}". Found ${matches.length} matches.`;
+              } else {
+                throw new Error(`Unknown tool: ${tc.function.name}`);
+              }
+            } catch (err: any) {
+              result = `Error executing tool: ${err.message}`;
+              summary = `Failed: ${err.message}`;
+              isError = true;
+            }
+
+            apiMessages.push({
+              role: "tool",
+              tool_call_id: tc.id,
+              name: tc.function.name,
+              content: result
+            });
+
+            toolLogs.push({
+              id: tc.id,
+              type: "tool",
+              toolName: tc.function.name,
+              arguments: parsedArgs,
+              status: isError ? "failed" : "completed",
+              resultSummary: summary,
+              rawOutput: result,
+              timestamp: new Date().toLocaleTimeString()
+            });
+          }
+          keepRunning = true;
+        } else {
+          keepRunning = false;
+        }
+      }
+
+      return NextResponse.json({
+        text: finalAssistantText,
+        toolLogs: toolLogs
       });
     }
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        const sendEvent = (data: any) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        };
-
-        try {
-          const client = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-            timeout: 60 * 1000, // 60 seconds timeout
-            maxRetries: 3       // automatically retry up to 3 times
-          });
-
-          // Formulate full message history
-          const apiMessages: any[] = [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...messages.map((m: any) => ({
-              role: m.role,
-              content: m.text || m.content || ""
-            }))
-          ];
-
-          let keepRunning = true;
-          let iterations = 0;
-          const maxIterations = 5;
-
-          while (keepRunning && iterations < maxIterations) {
-            iterations++;
-            console.log(`Agent Loop Turn ${iterations}`);
-
-            // Send LLM turn start log to client
-            const lastMsg = apiMessages.filter(m => m.role === "user").pop();
-            const turnInput = lastMsg
-              ? `Prompting ${OPENAI_MODEL} with context (last query: "${lastMsg.content.slice(0, 100)}...") [Messages History Length: ${apiMessages.length}]`
-              : `Prompting ${OPENAI_MODEL} (Turn ${iterations}) [Messages History Length: ${apiMessages.length}]`;
-
-            sendEvent({
-              type: "llm_turn",
-              id: `llm-turn-${iterations}`,
-              input: turnInput,
-              status: "running"
-            });
-
-            const responseStream = await client.chat.completions.create({
-              model: OPENAI_MODEL,
-              messages: apiMessages,
-              tools: tools,
-              stream: true
-            });
-
-            let assistantText = "";
-            let toolCallsAccumulator: any[] = [];
-
-            for await (const chunk of responseStream) {
-              const delta = chunk.choices[0]?.delta;
-              if (!delta) continue;
-
-              // 1. Text deltas
-              if (delta.content) {
-                assistantText += delta.content;
-                sendEvent({
-                  type: "stream_event",
-                  event: {
-                    type: "content_block_delta",
-                    delta: {
-                      type: "text_delta",
-                      text: delta.content
-                    }
-                  }
-                });
-              }
-
-              // 2. Tool calls deltas
-              if (delta.tool_calls) {
-                for (const toolCallDelta of delta.tool_calls) {
-                  const idx = toolCallDelta.index;
-                  if (toolCallsAccumulator[idx] === undefined) {
-                    toolCallsAccumulator[idx] = {
-                      id: toolCallDelta.id || "",
-                      name: toolCallDelta.function?.name || "",
-                      arguments: toolCallDelta.function?.arguments || ""
-                    };
-                  } else {
-                    if (toolCallDelta.id) {
-                      toolCallsAccumulator[idx].id = toolCallDelta.id;
-                    }
-                    if (toolCallDelta.function?.name) {
-                      toolCallsAccumulator[idx].name = toolCallDelta.function.name;
-                    }
-                    if (toolCallDelta.function?.arguments) {
-                      toolCallsAccumulator[idx].arguments += toolCallDelta.function.arguments;
-                    }
-                  }
-                }
-              }
-            }
-
-            const toolCalls = toolCallsAccumulator.filter(tc => tc !== undefined && tc.name !== "");
-
-            // Send LLM completion turn summary
-            const summaryText = assistantText
-              ? assistantText
-              : (toolCalls.length ? `[Requested tool calls: ${toolCalls.map(tc => tc.name).join(", ")}]` : "[No content returned]");
-
-            sendEvent({
-              type: "llm_turn_summary",
-              id: `llm-turn-${iterations}`,
-              output: summaryText
-            });
-
-            if (toolCalls.length > 0) {
-              console.log("Executing tools:", toolCalls);
-
-              // Add assistant message with tool calls to message history
-              apiMessages.push({
-                role: "assistant",
-                content: assistantText || null,
-                tool_calls: toolCalls.map(tc => ({
-                  id: tc.id,
-                  type: "function" as const,
-                  function: {
-                    name: tc.name,
-                    arguments: tc.arguments
-                  }
-                }))
-              });
-
-              for (const tc of toolCalls) {
-                let parsedArgs: any = {};
-                try {
-                  parsedArgs = JSON.parse(tc.arguments);
-                } catch (e) {
-                  console.error("Arguments parsing failed:", tc.arguments);
-                }
-
-                // Send tool_use initiation event to client
-                sendEvent({
-                  type: "stream_event",
-                  event: {
-                    type: "tool_use",
-                    id: tc.id,
-                    name: tc.name,
-                    input: parsedArgs
-                  }
-                });
-
-                let result = "";
-                let summary = "";
-                let isError = false;
-
-                try {
-                  if (tc.name === "read_pages") {
-                    const { source, pages } = parsedArgs;
-                    if (!source || !pages || !Array.isArray(pages)) {
-                      throw new Error("Missing parameters 'source' or 'pages' in read_pages");
-                    }
-                    const contents = pages.map((p: number) => {
-                      const text = readPage(source, p);
-                      return `--- Page ${p} (${source}) ---\n${text}`;
-                    });
-                    result = contents.join("\n\n");
-                    summary = `Loaded ${pages.length} pages of '${source}': [${pages.join(", ")}]`;
-                  } else if (tc.name === "grep") {
-                    const { query, source } = parsedArgs;
-                    if (!query) {
-                      throw new Error("Missing parameter 'query' in grep");
-                    }
-                    const matches = runGrep(query, source);
-                    result = JSON.stringify(matches, null, 2);
-                    summary = `Searched for "${query}" across manuals. Found ${matches.length} matches.`;
-                  } else {
-                    throw new Error(`Unknown tool: ${tc.name}`);
-                  }
-                } catch (err: any) {
-                  console.error(`Tool execution failed for ${tc.name}:`, err);
-                  result = `Error executing tool: ${err.message}`;
-                  summary = `Failed: ${err.message}`;
-                  isError = true;
-                }
-
-                // Add tool result to message history
-                apiMessages.push({
-                  role: "tool",
-                  tool_call_id: tc.id,
-                  name: tc.name,
-                  content: result
-                });
-
-                // Stream tool summary with full result
-                sendEvent({
-                  type: "tool_use_summary",
-                  toolName: tc.name,
-                  isError: isError,
-                  summary: summary,
-                  result: result
-                });
-              }
-
-              keepRunning = true;
-            } else {
-              keepRunning = false;
-              // Stream final message package
-              sendEvent({
-                type: "assistant",
-                message: {
-                  content: [
-                    {
-                      type: "text",
-                      text: assistantText
-                    }
-                  ]
-                }
-              });
-            }
-          }
-        } catch (err: any) {
-          console.error("Agent loop failed:", err);
-          sendEvent({
-            type: "system",
-            subtype: "error",
-            message: err.message || "Unknown internal error in agent loop"
-          });
-        } finally {
-          controller.close();
-        }
-      }
-    });
-
-    return new NextResponse(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
-      }
-    });
   } catch (err: any) {
     console.error("API route failed:", err);
     return NextResponse.json(
