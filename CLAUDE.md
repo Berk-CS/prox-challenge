@@ -9,7 +9,7 @@ This project implements a multimodal reasoning agent for the Vulcan OmniPro 220 
   - `images/` - Extracted layout images, diagrams, schematics, and photos.
   - `metadata.json` - High-level index mapping pages to figures, keywords, and topics.
 - `src/app/` - The Next.js client App Router workspace layout and client application.
-- `src/app/api/chat/route.ts` - The server-side API endpoint invoking the Claude Agent SDK.
+- `src/app/api/chat/route.ts` - The server-side API endpoint invoking the OpenAI and Claude Agent SDKs.
 
 ## Agent Behavior Guidelines
 1. **Document Reference**: When users ask technical queries about the welder, prioritize reading the page markdown files located in `public/extracted/text/`.
