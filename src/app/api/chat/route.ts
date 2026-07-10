@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from "openai";
-import { query } from "@anthropic-ai/claude-agent-sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -136,105 +136,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No messages provided." }, { status: 400 });
     }
 
-    const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
-    if (isAnthropic) {
-      const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
-      const promptText = lastUserMessage?.text || lastUserMessage?.content || "";
-
-      const stream = query({
-        prompt: promptText,
-        options: {
-          cwd: process.cwd(),
-          continue: true,
-          model: "claude-sonnet-5",
-          allowedTools: ["Read", "Grep", "Bash", "Edit", "Glob"]
-        }
-      });
-
-      const encoder = new TextEncoder();
-      const responseStream = new ReadableStream({
-        async start(controller) {
-          const sendEvent = (data: any) => {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-          };
-
-          try {
-            sendEvent({
-              type: "llm_turn",
-              id: "llm-turn-claude",
-              input: `Prompting Claude Code with query: "${promptText.slice(0, 100)}..."`,
-              status: "running"
-            });
-
-            let assistantText = "";
-            for await (const message of stream) {
-              if (message.type === "stream_event") {
-                const event = message.event;
-                if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                  assistantText += event.delta.text;
-                }
-                sendEvent(message);
-              } else if (message.type === "tool_progress") {
-                sendEvent({
-                  type: "stream_event",
-                  event: {
-                    type: "tool_use",
-                    id: message.tool_use_id,
-                    name: message.tool_name,
-                    input: `Executing tool...`
-                  }
-                });
-              } else if (message.type === "tool_use_summary") {
-                sendEvent({
-                  type: "tool_use_summary",
-                  toolName: message.summary.split(" ")[0] || "Tool",
-                  isError: false,
-                  summary: message.summary,
-                  result: ""
-                });
-              }
-            }
-
-            sendEvent({
-              type: "llm_turn_summary",
-              id: "llm-turn-claude",
-              output: assistantText || "[No content returned]"
-            });
-
-            sendEvent({
-              type: "assistant",
-              message: {
-                content: [
-                  {
-                    type: "text",
-                    text: assistantText
-                  }
-                ]
-              }
-            });
-
-          } catch (err: any) {
-            console.error("Claude Agent SDK error:", err);
-            sendEvent({
-              type: "system",
-              subtype: "error",
-              message: err.message || "Unknown error in Claude Agent SDK"
-            });
-          } finally {
-            controller.close();
-          }
-        }
-      });
-
-      return new NextResponse(responseStream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive"
-        }
-      });
-    }
-
     // Load compact manual index dynamically
     const compactIndexPath = path.join(process.cwd(), "public", "extracted", "manual_index_compact.json");
     let compactIndexStr = "";
@@ -295,7 +196,294 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
 </antArtifact>
 `;
 
-    // Set up SSE Stream headers
+    const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
+    if (isAnthropic) {
+      const encoder = new TextEncoder();
+      const responseStream = new ReadableStream({
+        async start(controller) {
+          const sendEvent = (data: any) => {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          };
+
+          try {
+            const client = new Anthropic({
+              apiKey: process.env.ANTHROPIC_API_KEY
+            });
+
+            // Formulate full message history for Anthropic
+            const apiMessages: any[] = [];
+            for (const m of messages) {
+              if (m.role === "system") continue;
+              apiMessages.push({
+                role: m.role === "user" ? "user" : "assistant",
+                content: m.text || m.content || ""
+              });
+            }
+
+            const anthropicTools: Anthropic.Messages.Tool[] = [
+              {
+                name: "read_pages",
+                description: "Reads the content of specified page-level markdown files for a given manual source.",
+                input_schema: {
+                  type: "object",
+                  properties: {
+                    source: {
+                      type: "string",
+                      enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+                      description: "The source manual to read from."
+                    },
+                    pages: {
+                      type: "array",
+                      items: {
+                        type: "integer"
+                      },
+                      description: "An array of page numbers to load."
+                    }
+                  },
+                  required: ["source", "pages"]
+                }
+              },
+              {
+                name: "grep",
+                description: "Searches for a keyword or phrase across all page markdown files.",
+                input_schema: {
+                  type: "object",
+                  properties: {
+                    query: {
+                      type: "string",
+                      description: "The exact search term or phrase to look for."
+                    },
+                    source: {
+                      type: "string",
+                      enum: ["owner-manual", "quick-start-guide", "selection-chart"],
+                      description: "Optional source filter. If omitted, searches all manuals."
+                    }
+                  },
+                  required: ["query"]
+                }
+              }
+            ];
+
+            let keepRunning = true;
+            let iterations = 0;
+            const maxIterations = 5;
+
+            while (keepRunning && iterations < maxIterations) {
+              iterations++;
+              console.log(`Claude Agent Loop Turn ${iterations}`);
+
+              const lastMsg = apiMessages.filter(m => m.role === "user").pop();
+              const turnInput = lastMsg
+                ? `Prompting Claude with context (last query: "${lastMsg.content.slice(0, 100)}...") [Messages History Length: ${apiMessages.length}]`
+                : `Prompting Claude (Turn ${iterations}) [Messages History Length: ${apiMessages.length}]`;
+
+              sendEvent({
+                type: "llm_turn",
+                id: `llm-turn-${iterations}`,
+                input: turnInput,
+                status: "running"
+              });
+
+              const responseStream = await client.messages.create({
+                model: "claude-opus-4-8",
+                max_tokens: 4096,
+                system: SYSTEM_PROMPT,
+                messages: apiMessages,
+                tools: anthropicTools,
+                stream: true
+              });
+
+              let assistantText = "";
+              let toolCallsAccumulator: any[] = [];
+
+              for await (const chunk of responseStream) {
+                if (chunk.type === "content_block_start") {
+                  if (chunk.content_block.type === "tool_use") {
+                    toolCallsAccumulator.push({
+                      id: chunk.content_block.id,
+                      name: chunk.content_block.name,
+                      input: ""
+                    });
+                  }
+                } else if (chunk.type === "content_block_delta") {
+                  const delta = chunk.delta;
+                  if (delta.type === "text_delta") {
+                    assistantText += delta.text;
+                    sendEvent({
+                      type: "stream_event",
+                      event: {
+                        type: "content_block_delta",
+                        delta: {
+                          type: "text_delta",
+                          text: delta.text
+                        }
+                      }
+                    });
+                  } else if (delta.type === "input_json_delta") {
+                    const lastToolCall = toolCallsAccumulator[toolCallsAccumulator.length - 1];
+                    if (lastToolCall) {
+                      lastToolCall.input += delta.partial_json;
+                    }
+                  }
+                }
+              }
+
+              const toolCalls = toolCallsAccumulator.map((tc) => {
+                let parsedArgs: any = {};
+                try {
+                  parsedArgs = JSON.parse(tc.input);
+                } catch (e) {
+                  console.error("Failed to parse tool input JSON:", tc.input);
+                }
+                return {
+                  id: tc.id,
+                  name: tc.name,
+                  input: parsedArgs
+                };
+              });
+
+              const summaryText = assistantText
+                ? assistantText
+                : (toolCalls.length ? `[Requested tool calls: ${toolCalls.map(tc => tc.name).join(", ")}]` : "[No content returned]");
+
+              sendEvent({
+                type: "llm_turn_summary",
+                id: `llm-turn-${iterations}`,
+                output: summaryText
+              });
+
+              if (toolCalls.length > 0) {
+                console.log("Executing Claude tools:", toolCalls);
+
+                const assistantContentBlocks: any[] = [];
+                if (assistantText) {
+                  assistantContentBlocks.push({
+                    type: "text",
+                    text: assistantText
+                  });
+                }
+                for (const tc of toolCalls) {
+                  assistantContentBlocks.push({
+                    type: "tool_use",
+                    id: tc.id,
+                    name: tc.name,
+                    input: tc.input
+                  });
+                }
+
+                apiMessages.push({
+                  role: "assistant",
+                  content: assistantContentBlocks
+                });
+
+                const toolResultBlocks: any[] = [];
+
+                for (const tc of toolCalls) {
+                  sendEvent({
+                    type: "stream_event",
+                    event: {
+                      type: "tool_use",
+                      id: tc.id,
+                      name: tc.name,
+                      input: tc.input
+                    }
+                  });
+
+                  let result = "";
+                  let summary = "";
+                  let isError = false;
+
+                  try {
+                    if (tc.name === "read_pages") {
+                      const { source, pages } = tc.input;
+                      if (!source || !pages || !Array.isArray(pages)) {
+                        throw new Error("Missing parameters 'source' or 'pages' in read_pages");
+                      }
+                      const contents = pages.map((p: number) => {
+                        const text = readPage(source, p);
+                        return `--- Page ${p} (${source}) ---\n${text}`;
+                      });
+                      result = contents.join("\n\n");
+                      summary = `Loaded ${pages.length} pages of '${source}': [${pages.join(", ")}]`;
+                    } else if (tc.name === "grep") {
+                      const { query, source } = tc.input;
+                      if (!query) {
+                        throw new Error("Missing parameter 'query' in grep");
+                      }
+                      const matches = runGrep(query, source);
+                      result = JSON.stringify(matches, null, 2);
+                      summary = `Searched for "${query}" across manuals. Found ${matches.length} matches.`;
+                    } else {
+                      throw new Error(`Unknown tool: ${tc.name}`);
+                    }
+                  } catch (err: any) {
+                    console.error(`Tool execution failed for ${tc.name}:`, err);
+                    result = `Error executing tool: ${err.message}`;
+                    summary = `Failed: ${err.message}`;
+                    isError = true;
+                  }
+
+                  toolResultBlocks.push({
+                    type: "tool_result",
+                    tool_use_id: tc.id,
+                    content: result,
+                    is_error: isError
+                  });
+
+                  sendEvent({
+                    type: "tool_use_summary",
+                    toolName: tc.name,
+                    isError: isError,
+                    summary: summary,
+                    result: result
+                  });
+                }
+
+                apiMessages.push({
+                  role: "user",
+                  content: toolResultBlocks
+                });
+
+                keepRunning = true;
+              } else {
+                keepRunning = false;
+
+                sendEvent({
+                  type: "assistant",
+                  message: {
+                    content: [
+                      {
+                        type: "text",
+                        text: assistantText
+                      }
+                    ]
+                  }
+                });
+              }
+            }
+
+          } catch (err: any) {
+            console.error("Claude Agent error:", err);
+            sendEvent({
+              type: "system",
+              subtype: "error",
+              message: err.message || "Unknown error in Claude Agent SDK"
+            });
+          } finally {
+            controller.close();
+          }
+        }
+      });
+
+      return new NextResponse(responseStream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive"
+        }
+      });
+    }
+
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
