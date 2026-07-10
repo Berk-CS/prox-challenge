@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic";
 
 const OPENAI_MODEL = "gpt-5.4-mini";
 
-// Tool schemas for the OpenAI Chat Completions API
 const tools = [
   {
     type: "function" as const,
@@ -60,16 +59,12 @@ const tools = [
   }
 ];
 
-// Helper functions for reading page contents and grep
 function readPage(source: string, pageNum: number): string {
-  const filePath = path.join(
-    process.cwd(),
-    "public",
-    "extracted",
-    "text",
-    source,
-    `page_${pageNum}.md`
-  );
+  const textDir = path.resolve(process.cwd(), "public", "extracted", "text");
+  const filePath = path.resolve(textDir, source, `page_${pageNum}.md`);
+  if (!filePath.startsWith(textDir)) {
+    return "Error: Invalid path access.";
+  }
   if (fs.existsSync(filePath)) {
     return fs.readFileSync(filePath, "utf-8");
   }
@@ -85,7 +80,7 @@ interface GrepMatch {
 
 function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
   const matches: GrepMatch[] = [];
-  const textDir = path.join(process.cwd(), "public", "extracted", "text");
+  const textDir = path.resolve(process.cwd(), "public", "extracted", "text");
 
   const sources = sourceFilter
     ? [sourceFilter]
@@ -94,7 +89,8 @@ function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
   const lowerQuery = query.toLowerCase();
 
   for (const src of sources) {
-    const srcDir = path.join(textDir, src);
+    const srcDir = path.resolve(textDir, src);
+    if (!srcDir.startsWith(textDir)) continue;
     if (!fs.existsSync(srcDir)) continue;
 
     const files = fs.readdirSync(srcDir);
@@ -130,13 +126,19 @@ function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, model } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
+    }
+
+    const { messages, model } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "No messages provided." }, { status: 400 });
     }
 
-    // Load compact manual index dynamically
     const compactIndexPath = path.join(process.cwd(), "public", "extracted", "manual_index_compact.json");
     let compactIndexStr = "";
     if (fs.existsSync(compactIndexPath)) {
@@ -427,6 +429,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
           apiMessages.push(message);
 
           for (const tc of toolCalls) {
+            if (tc.type !== "function") continue;
             let parsedArgs: any = {};
             try {
               parsedArgs = JSON.parse(tc.function.arguments);

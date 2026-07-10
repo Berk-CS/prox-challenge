@@ -43,6 +43,7 @@ interface Message {
   text: string;
   timestamp: string;
   toolLogs?: ToolLog[];
+  isError?: boolean;
 }
 
 interface ExtractedArtifact {
@@ -407,11 +408,9 @@ export default function Home() {
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
   
-  // Tab State
   const [activeTab, setActiveTab] = useState<"chat" | "preview" | "manual">("chat");
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
-  
-  // Artifacts State
+
   const [artifacts, setArtifacts] = useState<Record<string, ExtractedArtifact>>({
     "custom-artifact": {
       id: "custom-artifact",
@@ -422,23 +421,20 @@ export default function Home() {
   });
   const [activeArtifactId, setActiveArtifactId] = useState<string | null>("custom-artifact");
 
-  // Sandbox retry and error states
   const [retryCount, setRetryCount] = useState<number>(0);
   const [sandboxError, setSandboxError] = useState<string | null>(null);
 
-  // Settings and mode states
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(true);
   const [selectedModel, setSelectedModel] = useState<"openai" | "claude">("openai");
 
-  // Local code editor state and copied state
   const [localCode, setLocalCode] = useState<string>(" ");
   const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
     const currentContent = activeArtifactId && artifacts[activeArtifactId] ? artifacts[activeArtifactId].content : "";
     setLocalCode(currentContent);
-  }, [activeArtifactId, activeArtifactId && artifacts[activeArtifactId] ? artifacts[activeArtifactId].content : ""]);
+  }, [activeArtifactId, artifacts]);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -466,24 +462,20 @@ export default function Home() {
     };
   }, []);
 
-  // Manual viewer state
   const [selectedDoc, setSelectedDoc] = useState<string>("owner-manual");
   const [selectedPage, setSelectedPage] = useState<number>(1);
   const [pageTextContent, setPageTextContent] = useState<string>("Loading manual content...");
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Hydration guard
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, toolLogs]);
 
-  // Load manual metadata on startup
   useEffect(() => {
     fetch("/extracted/metadata.json")
       .then((res) => res.json())
@@ -493,7 +485,6 @@ export default function Home() {
       .catch((err) => console.error("Error loading manual index:", err));
   }, []);
 
-  // Fetch page content when selected
   useEffect(() => {
     if (!selectedDoc || !selectedPage) return;
     setPageTextContent("Loading page...");
@@ -506,12 +497,10 @@ export default function Home() {
       .catch(() => setPageTextContent("Could not load page content. It might not be extracted yet."));
   }, [selectedDoc, selectedPage]);
 
-  // Parse complete & streaming artifacts from assistant responses
-  const parseArtifacts = (text: string) => {
+  const parseArtifacts = useCallback((text: string) => {
     const found: Record<string, ExtractedArtifact> = {};
     const completedIds = new Set<string>();
-    
-    // Parse complete tags
+
     const completeRegex = /<antArtifact\s+identifier="([^"]+)"\s+type="([^"]+)"\s+title="([^"]+)"(?:\s+language="([^"]+)")?>([\s\S]*?)<\/antArtifact>/g;
     let match;
     while ((match = completeRegex.exec(text)) !== null) {
@@ -519,8 +508,7 @@ export default function Home() {
       found[id] = { id, type, title, content: content.trim() };
       completedIds.add(id);
     }
-    
-    // Parse incomplete/streaming tags at the end of response
+
     const incompleteRegex = /<antArtifact\s+identifier="([^"]+)"\s+type="([^"]+)"\s+title="([^"]+)"(?:\s+language="([^"]+)")?>([\s\S]*?)$/g;
     incompleteRegex.lastIndex = 0;
     const incMatch = incompleteRegex.exec(text);
@@ -532,33 +520,36 @@ export default function Home() {
     }
 
     if (Object.keys(found).length > 0) {
-      let hasChanges = false;
-      const currentKeys = Object.keys(found);
-      const prevKeys = Object.keys(artifacts);
-      
-      if (currentKeys.length !== prevKeys.length) {
-        hasChanges = true;
-      } else {
-        for (const key of currentKeys) {
-          if (!artifacts[key] || artifacts[key].content !== found[key].content || artifacts[key].title !== found[key].title || artifacts[key].type !== found[key].type) {
-            hasChanges = true;
-            break;
+      setArtifacts((prev) => {
+        let hasChanges = false;
+        const currentKeys = Object.keys(found);
+        const prevKeys = Object.keys(prev);
+
+        if (currentKeys.length !== prevKeys.length) {
+          hasChanges = true;
+        } else {
+          for (const key of currentKeys) {
+            if (!prev[key] || prev[key].content !== found[key].content || prev[key].title !== found[key].title || prev[key].type !== found[key].type) {
+              hasChanges = true;
+              break;
+            }
           }
         }
-      }
-      
-      if (hasChanges) {
-        setArtifacts(found);
-        const lastKey = currentKeys[currentKeys.length - 1];
-        if (lastKey) {
-          setActiveArtifactId(lastKey);
-          setActiveTab("preview");
-        }
-      }
-    }
-  };
 
-  const handleArtifactContentChange = (content: string) => {
+        if (hasChanges) {
+          const lastKey = currentKeys[currentKeys.length - 1];
+          if (lastKey) {
+            setActiveArtifactId(lastKey);
+            setActiveTab("preview");
+          }
+          return found;
+        }
+        return prev;
+      });
+    }
+  }, []);
+
+  const handleArtifactContentChange = useCallback((content: string) => {
     if (!activeArtifactId) return;
     setArtifacts((prev) => ({
       ...prev,
@@ -567,9 +558,9 @@ export default function Home() {
         content: content
       }
     }));
-  };
+  }, [activeArtifactId]);
 
-  const handleSend = async (customText?: string) => {
+  const handleSend = useCallback(async (customText?: string) => {
     const textToSend = customText || input;
     if (!textToSend.trim() || isLoading) return;
 
@@ -587,11 +578,11 @@ export default function Home() {
       setSandboxError(null);
     }
     setIsLoading(true);
-    setToolLogs([]); // clear logs
-    setExpandedLogs({}); // clear expanded states
+    setToolLogs([]);
+    setExpandedLogs({});
 
     const assistantMsgId = `assistant-${Date.now()}`;
-    
+
     setMessages((prev) => [
       ...prev,
       {
@@ -619,7 +610,7 @@ export default function Home() {
       }
 
       const data = await response.json();
-      
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
@@ -652,7 +643,8 @@ export default function Home() {
           m.id === assistantMsgId
             ? {
                 ...m,
-                text: `[Error: ${errorMsg}]`
+                isError: true,
+                text: errorMsg
               }
             : m
         )
@@ -660,7 +652,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, messages, selectedModel, parseArtifacts]);
 
   const handleSandboxSuccess = useCallback(() => {
     setSandboxError(null);
@@ -703,6 +695,11 @@ Please analyze this error, fix your code, and output the entire corrected React 
               {msg.role === "system" ? (
                 <div className="w-full rounded border border-success/20 bg-success/5 p-3 font-mono text-xs text-success/90">
                   {msg.text}
+                </div>
+              ) : msg.isError ? (
+                <div className="w-full flex items-center space-x-2 rounded border border-error/20 bg-error/5 p-3 text-xs text-error font-medium">
+                  <AlertTriangle className="h-4.5 w-4.5 shrink-0 text-error animate-pulse" />
+                  <span>Error: {msg.text}</span>
                 </div>
               ) : (
                 <div
