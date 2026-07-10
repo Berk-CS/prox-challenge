@@ -280,6 +280,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
           model: "claude-sonnet-5",
           max_tokens: 4096,
           system: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
           messages: apiMessages,
           tools: anthropicTools,
           stream: false
