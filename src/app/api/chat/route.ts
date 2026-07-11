@@ -251,7 +251,8 @@ ${cleanText || ""}`;
 
       if (isAnthropic) {
         const client = new Anthropic({
-          apiKey: process.env.ANTHROPIC_API_KEY
+          apiKey: process.env.ANTHROPIC_API_KEY,
+          timeout: 60 * 1000
         });
 
         const visualResponse = await client.messages.create({
@@ -298,7 +299,8 @@ ${cleanText || ""}`;
 
     if (isAnthropic) {
       const client = new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY
+        apiKey: process.env.ANTHROPIC_API_KEY,
+        timeout: 60 * 1000
       });
 
       const apiMessages: any[] = [];
