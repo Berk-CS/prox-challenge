@@ -398,7 +398,7 @@ export default function Home() {
     {
       id: "system-1",
       role: "system",
-      text: "System initialized. Vulcan OmniPro 220 manual index and image libraries loaded. Ready to accept calibration queries.",
+      text: "Welcome to the Vulcan OmniPro 220 Assistant! I've loaded the owner's manual and am ready to help you with any setup, troubleshooting, or calibration questions you might have.",
       timestamp: new Date().toLocaleTimeString()
     }
   ]);
@@ -407,6 +407,20 @@ export default function Home() {
   const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
+
+  // STT / TTS State
+  const [isListening, setIsListening] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Cleanup speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
   
   const [activeTab, setActiveTab] = useState<"chat" | "preview" | "manual">("chat");
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
@@ -690,6 +704,76 @@ Please analyze this error, fix your code, and output the entire corrected React 
     }
   }, [isLoading, retryCount, handleSend]);
 
+  // --- SPEECH RECOGNITION (STT) ---
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    
+    try {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition is not supported in this browser. Try using Chrome or Edge.");
+        return;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onstart = () => setIsListening(true);
+      recognition.onresult = (event: any) => {
+        let finalTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setInput((prev) => prev ? prev + " " + finalTranscript : finalTranscript);
+        }
+      };
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsListening(false);
+      };
+      recognition.onend = () => setIsListening(false);
+      
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error(err);
+      setIsListening(false);
+    }
+  }, [isListening]);
+
+  // --- TEXT TO SPEECH (TTS) ---
+  const toggleSpeak = useCallback((text: string, messageId: string) => {
+    if (speakingMessageId === messageId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+    
+    window.speechSynthesis.cancel();
+    
+    // Clean text of artifact tags, code blocks, and markdown
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, " code snippet ")
+      .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, " interactive artifact generated ")
+      .replace(/<antArtifact[\s\S]*$/g, " interactive artifact generated ")
+      .replace(/[*_#`]/g, " ");
+      
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+    
+    setSpeakingMessageId(messageId);
+    window.speechSynthesis.speak(utterance);
+  }, [speakingMessageId]);
+
   const renderChatContent = (isSidebar = false) => {
     return (
       <div className="flex flex-col h-full overflow-hidden">
@@ -701,6 +785,19 @@ Please analyze this error, fix your code, and output the entire corrected React 
                 <span>{msg.role}</span>
                 <span>•</span>
                 <span>{msg.timestamp}</span>
+                {msg.role === "assistant" && !msg.isError && (
+                  <button 
+                    onClick={() => toggleSpeak(msg.text, msg.id)}
+                    className="ml-2 flex items-center justify-center p-1 rounded hover:bg-white/10 text-gray-400 hover:text-primary transition-colors cursor-pointer"
+                    title={speakingMessageId === msg.id ? "Stop speaking" : "Read aloud"}
+                  >
+                    {speakingMessageId === msg.id ? (
+                      <LucideIcons.VolumeX className="h-3.5 w-3.5 text-accent animate-pulse" />
+                    ) : (
+                      <LucideIcons.Volume2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                )}
               </div>
               
               {msg.role === "system" ? (
@@ -907,9 +1004,20 @@ Please analyze this error, fix your code, and output the entire corrected React 
               className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600"
             />
             <button
+              onClick={toggleListening}
+              className={`rounded p-2 transition-colors flex-shrink-0 ${
+                isListening 
+                  ? "bg-error text-background animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" 
+                  : "bg-black/40 text-gray-400 hover:text-primary hover:bg-black/60 border border-border"
+              }`}
+              title={isListening ? "Stop listening" : "Speech to Text"}
+            >
+              {isListening ? <LucideIcons.MicOff className="h-4 w-4" /> : <LucideIcons.Mic className="h-4 w-4" />}
+            </button>
+            <button
               onClick={() => handleSend()}
               disabled={isLoading || !input.trim()}
-              className="rounded bg-primary p-2 text-background hover:bg-primary-hover disabled:bg-border disabled:text-gray-600 transition-colors"
+              className="rounded bg-primary p-2 text-background hover:bg-primary-hover disabled:bg-border disabled:text-gray-600 transition-colors flex-shrink-0"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
