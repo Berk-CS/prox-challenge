@@ -398,15 +398,23 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
 };
 
 
-// ----------------------------------------------------
-// MAIN APP COMPONENT
-// ----------------------------------------------------
 const PRESET_MESSAGES = [
   "What's the duty cycle for MIG welding at 200A on 240V?",
   "I'm getting porosity in my flux-cored welds. What should I check?",
   "What polarity setup do I need for TIG welding? Which socket does the ground clamp go in?",
   "generate interactive content: a duty cycle calculator",
   "I just bought a 10lb spool of steel wire and I'm looking at this wire feed tensioner inside the door. The manual talks about V-grooves, knurled grooves, and a specific tension scale. Can you show me exactly how to flip the roller for my wire size and how tight to screw down the tensioner knob?"
+];
+
+const PROGRESS_MESSAGES = [
+  "Consulting librarian index...",
+  "Searching documentation database...",
+  "Reading manual specifications and charts...",
+  "Analyzing referenced details and page data...",
+  "Formulating safety and settings guidelines...",
+  "Compiling technical configurations...",
+  "Assembling visual layouts and schematics...",
+  "Polishing interactive dashboard..."
 ];
 
 export default function Home() {
@@ -430,6 +438,19 @@ export default function Home() {
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [loadingPhase, setLoadingPhase] = useState<number>(0);
+
+  // Cycle thinking progress messages every 7 seconds
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingPhase(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingPhase((p) => p + 1);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   // Automatically adjust textarea height based on content
   useEffect(() => {
@@ -997,21 +1018,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                           <div className="flex items-center space-x-2.5 text-xs font-mono text-gray-300">
                             <Loader2 className="h-4 w-4 animate-spin text-primary" />
                             <span className="font-bold tracking-wide animate-pulse">
-                              {(() => {
-                                if (!msg.toolLogs || msg.toolLogs.length === 0) {
-                                  return "Consulting librarian index...";
-                                }
-                                const activeLog = msg.toolLogs[msg.toolLogs.length - 1];
-                                if (activeLog.status === "running") {
-                                  if (activeLog.toolName === "read_pages") return "Reading manual specs and charts...";
-                                  if (activeLog.toolName === "grep") return "Searching documents for matching terms...";
-                                  return `Running: ${activeLog.toolName}...`;
-                                }
-                                if (activeLog.toolName === "read_pages") return "Analyzing reference data...";
-                                if (activeLog.toolName === "grep") return "Processing search matches...";
-                                if (activeLog.toolName.includes("Step 3") || activeLog.toolName.includes("Generator") || activeLog.toolName.includes("Visual")) return "Generating interactive dashboard...";
-                                return "Reasoning about configurations...";
-                              })()}
+                              {PROGRESS_MESSAGES[loadingPhase % PROGRESS_MESSAGES.length]}
                             </span>
                           </div>
                           <div className="flex space-x-1.5 items-center">
@@ -1228,10 +1235,10 @@ Please analyze this error, fix your code, and output the entire corrected React 
           </div>
           <button
             onClick={handleClearChat}
-            className="text-gray-400 hover:text-error transition-colors focus:outline-none cursor-pointer"
+            className="px-2.5 py-1 text-[10px] font-mono border border-border rounded bg-black/30 text-gray-400 hover:text-error hover:border-error/40 transition-colors focus:outline-none cursor-pointer select-none"
             title="Clear Chat History"
           >
-            <Trash2 className="h-5 w-5" />
+            Clear Chat
           </button>
           <button
             onClick={() => setShowSettings(!showSettings)}
