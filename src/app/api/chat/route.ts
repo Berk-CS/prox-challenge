@@ -6,8 +6,7 @@ import * as path from "path";
 
 export const dynamic = "force-dynamic";
 
-
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-5.4-mini";
 
 const tools = [
   {
@@ -124,6 +123,48 @@ function runGrep(query: string, sourceFilter?: string): GrepMatch[] {
   return matches;
 }
 
+interface VisualDecision {
+  visual_needed: boolean;
+  visual_type?: "react_component" | "svg_diagram" | "mermaid_flowchart";
+  proposed_title?: string;
+}
+
+function extractVisualDecision(text: string): { decision: VisualDecision; cleanText: string } {
+  const jsonBlockRegex = /```json\s*([\s\S]*?)```/g;
+  const match = jsonBlockRegex.exec(text);
+
+  if (match) {
+    try {
+      const decision = JSON.parse(match[1].trim());
+      const cleanText = text.replace(match[0], "").trim();
+      return { decision, cleanText };
+    } catch (e) {
+      console.error("Failed to parse JSON decision from markdown block:", e);
+    }
+  }
+
+  // Fallback: search for raw JSON curly braces
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.indexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      const jsonStr = text.substring(firstBrace, lastBrace + 1);
+      const decision = JSON.parse(jsonStr.trim());
+      const cleanText = text.replace(jsonStr, "").trim();
+      // Strip any residual markdown formatting if JSON block was naked
+      const finalCleanText = cleanText.replace(/```json\s*```/g, "").trim();
+      return { decision, cleanText: finalCleanText };
+    } catch (e) {
+      console.error("Failed to parse raw JSON decision:", e);
+    }
+  }
+
+  return {
+    decision: { visual_needed: false },
+    cleanText: text
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     let body;
@@ -145,63 +186,63 @@ export async function POST(req: NextRequest) {
       compactIndexStr = fs.readFileSync(compactIndexPath, "utf-8");
     }
 
-    const SYSTEM_PROMPT = `You are a professional, expert reasoning assistant for the Vulcan OmniPro 220 multiprocess welder.
-Your goal is to answer deep technical questions about this welder accurately, helpfully, and using the official manuals.
+    const RESEARCH_PROMPT = `You are an expert technical reasoning assistant for the Vulcan OmniPro 220 multiprocess welder.
+Your goal is to provide deep, accurate technical answers using the official manuals via your tools.
 
-To ensure accuracy and avoid hallucination, you must check the manuals. You have access to a compacted index of the manuals which maps section titles to page numbers and outlines visual assets.
-Here is the compacted manual index content:
+MANUAL INDEX:
 ${compactIndexStr}
+(Key: om=Owner's Manual, qsg=Quick Start Guide, sc=Selection Chart | t=Title, p=Page, v=Visuals, d=Description)
 
-Key Mapping for the compact index:
-- om = Owner's Manual, qsg = Quick Start Guide, sc = Selection Chart
-- t = Section Title
-- p = Page numbers belonging to this section
-- v = Visual assets on the pages (omitted if none exist)
-- d = Detailed description of the diagram/visual (useful for checking if a diagram is relevant)
+RECOVERY PROCESS:
+1. Cross-reference the index to find relevant pages.
+2. Call the "read_pages" tool to load the exact content.
+3. Use the "grep" tool if your keyword search is highly specific or page lookup fails.
+4. Cite sources in your text using the formats: [Owner's Manual p. XX], [Quick Start Guide p. XX], or [Selection Chart p. XX].
 
-CRITICAL PROCESS FOR RECOVERING MANUAL CONTENT:
-1. Lookup the index inside your prompt to find relevant pages.
-2. Call the "read_pages" tool to load the contents of the relevant pages.
-3. If the index does not help or your search is too specific, use the "grep" tool to find word matches across the manual pages.
-4. Cite your sources in your final response: use [Owner's Manual p. XX], [Quick Start Guide p. XX], or [Selection Chart p. XX] format.
+VISUAL ARTIFACT EVALUATION:
+Dynamically evaluate if the technical solution would be significantly enhanced by a custom programmatic graphic, an interactive setup configurator, a data chart, or a troubleshooting flowchart. 
 
-REAL-TIME DIAGRAMS, PROGRAMMATIC SCHEMATICS & INTERACTIVE CONTENT (ARTIFACTS):
-- You must proactively decide when a visual is appropriate and generate it.
-- Render artifacts in your response to present code-generated visualizations, interactive tools, flowcharts, or diagrams.
-- Write your text response first, and then append the artifact block at the very end of your response.
+OUTPUT FORMAT:
+First append a single JSON block to declare your visual asset decision. Do not add any text after this block. then Provide your conversational, markdown-formatted technical answer.
 
-1. GENERATING PROGRAMMATIC DIAGRAMS & SCHEMATICS (SVG / React):
-   When the user asks for a control layout, a wire loader setup, joint designs, or socket polarity connections, you should draw it programmatically inside an artifact:
-   - For simple layouts/schematics: Use the SVG Diagram ("image/svg+xml") type to draw vector graphics (e.g. circles, lines, rectangles, paths) showing wire spool components, front panel knob positions, or joint geometries.
-   - For sockets polarity wiring: Use the React Component type to show a beautiful interactive mock of the welder's front panel sockets (+ and - terminals) with cables (ground clamp vs electrode holder/gun) dynamically plugged in based on the selected configuration.
+Format exactly like this:
+\`\`\`json
+{
+  "visual_needed": true, 
+  "visual_type": "react_component", // Choose from: "react_component", "svg_diagram", "mermaid_flowchart"
+  "proposed_title": "Descriptive Title of the Visual Asset"
+}
+\`\`\`
 
-2. GENERATING INTERACTIVE WIDGETS (React Components):
-   Write custom React components to create interactive tools for complex math or setups:
-   - Polarity Socket wiring: For process setup questions, create an interactive React component that displays the sockets (+ and - terminals) and wires/cables plug-in locations based on the selected process (MIG Solid-core DCEP vs MIG Flux-core DCEN vs Stick vs TIG).
-   - Duty Cycle Calculator: For duty cycle queries, write a React component calculator. It should take process and input amperage, and calculate: duty cycle %, weld time (min), rest time (min), and include a startable rest countdown timer widget.
-   - Settings Configurator: For voltage/wire speed queries, write a React component settings configurator. Let the user select process, material type, wire size, and thickness, and instantly print the recommended wire feed speed, voltage, polarity setup, and gas choice.
+[Your clear, comprehensive markdown technical response here]`;
 
-Expectations when writing React component code:
-* Structure: Write a standard, fully functional single-file React component.
-* Imports: You MUST explicitly include all necessary 'import' statements at the top of the file (e.g., 'import React, { useState, useEffect } from "react";').
-* Third-Party Packages: You can freely import and use components from 'lucide-react' or 'recharts'. Assume they are available dependencies. Do NOT use relative path imports for custom local files.
-* Exports: You MUST include exactly one 'export default function App()' as the main entry point component so the builder can render it.
-* Mounting: Do NOT write any manual 'ReactDOM.render' or 'createRoot' calls.
-* Aesthetics: Style widgets to look premium and tactile, matching an industrial control panel (slate/zinc containers, custom border styling, amber/orange highlights, glowing indicators, fully functional form inputs, and transitions). Prefer clean inline styles or vanilla CSS unless Tailwind is explicitly pre-configured in the environment template.
+    const VISUAL_GENERATOR_PROMPT = `You are an expert frontend engineer and industrial UI designer specializing in welding equipment interfaces.
+Your task is to generate a single standalone programmatic visual asset that aligns perfectly with the provided manual documentation and previous text answer.
 
-3. TROUBLESHOOTING FLOWCHARTS (Mermaid Diagrams):
-   Use Mermaid diagram artifacts for step-by-step defect troubleshooting. Remember to quote special characters in node labels: 'E["CTWD <= 1/2 inch"]'.
+ARTIFACT CAPABILITIES:
+- "image/svg+xml": Use for static vector graphics, control panel physical layouts, knob indices, torch angles, or wire-loader schematics.
+- "react": Use for interactive configuration tools, multi-variable calculators (voltage, speed, thickness), or interactive plug/cable polarity maps.
+- "mermaid": Use for step-by-step troubleshooting defect flowcharts. Quote special characters in nodes like: E["CTWD <= 1/2 inch"].
 
-To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
-<antArtifact identifier="unique-id" type="MIME-TYPE" title="Title">
-  [content]
-</antArtifact>
-`;
+CODE EXPECTATIONS (For React Components):
+- Write a standard, fully functional single-file React component.
+- Include all necessary React imports at the top. Do NOT import relative local files.
+- Export exactly one main component: 'export default function App()'. Do NOT call ReactDOM.render.
+- Aesthetics: Style widgets to look modern, clean but simple.
+
+OUTPUT WRAPPER:
+Wrap your entire generated code within opening and closing <antArtifact> tags. Do not output conversational filler text or write markdown wrappers around the artifact.
+
+Format exactly like this:
+<antArtifact identifier="dynamic-welder-asset" type="MIME-TYPE-HERE" title="TITLE-HERE">
+[Your raw code content here]
+</antArtifact>`;
 
     const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
 
     let finalAssistantText = "";
     let toolLogs: any[] = [];
+    const retrievedPagesContent: string[] = [];
 
     if (isAnthropic) {
       const client = new Anthropic({
@@ -265,6 +306,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
       let iterations = 0;
       const maxIterations = 5;
 
+      // STEP 1 & 2: Research and Answer Loop
       while (keepRunning && iterations < maxIterations) {
         iterations++;
         console.log(`Claude Agent Loop Turn ${iterations}`);
@@ -280,8 +322,8 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
 
         const response = await client.messages.create({
           model: "claude-sonnet-5",
-          max_tokens: 20000,  // just in case ai goes crazy
-          system: SYSTEM_PROMPT,
+          max_tokens: 20000,
+          system: RESEARCH_PROMPT,
           cache_control: { type: "ephemeral" },
           messages: apiMessages,
           tools: anthropicTools,
@@ -329,7 +371,11 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
               if (tc.name === "read_pages") {
                 const { source, pages } = tc.input as any;
                 if (!source || !pages || !Array.isArray(pages)) throw new Error("Missing parameters");
-                const contents = pages.map((p: number) => `--- Page ${p} (${source}) ---\n${readPage(source, p)}`);
+                const contents = pages.map((p: number) => {
+                  const pageText = readPage(source, p);
+                  retrievedPagesContent.push(`Source: ${source}, Page ${p}:\n${pageText}`);
+                  return `--- Page ${p} (${source}) ---\n${pageText}`;
+                });
                 result = contents.join("\n\n");
                 summary = `Loaded ${pages.length} pages of '${source}'`;
               } else if (tc.name === "grep") {
@@ -338,6 +384,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
                 const matches = runGrep(query, source);
                 result = JSON.stringify(matches, null, 2);
                 summary = `Searched for "${query}". Found ${matches.length} matches.`;
+                retrievedPagesContent.push(`Grep matches for query "${query}":\n${result}`);
               } else {
                 throw new Error(`Unknown tool: ${tc.name}`);
               }
@@ -372,8 +419,48 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
         }
       }
 
+      // STEP 2 Parsing: Extract technical response and decision JSON block
+      const { decision, cleanText } = extractVisualDecision(finalAssistantText);
+      console.log(`[Step 2] Visual needed evaluation:`, decision);
+
+      let finalText = cleanText;
+
+      // STEP 3: Generates visual layout code if evaluated true
+      if (decision.visual_needed) {
+        console.log(`[Step 3] Launching Claude Visual Generator...`);
+        const userQuery = messages[messages.length - 1].text || messages[messages.length - 1].content || "";
+        const visualQuery = `User Query: ${userQuery}
+
+Manual Page Extracts:
+${retrievedPagesContent.length > 0 ? retrievedPagesContent.join("\n\n") : "No specific manual pages retrieved."}
+
+Technical Text Answer:
+${cleanText}`;
+
+        const visualResponse = await client.messages.create({
+          model: "claude-sonnet-5",
+          max_tokens: 4096,
+          system: VISUAL_GENERATOR_PROMPT,
+          messages: [
+            { role: "user", content: visualQuery }
+          ],
+          stream: false
+        });
+
+        let visualCode = "";
+        for (const block of visualResponse.content) {
+          if (block.type === "text") {
+            visualCode += block.text;
+          }
+        }
+
+        if (visualCode.trim()) {
+          finalText = `${cleanText}\n\n${visualCode.trim()}`;
+        }
+      }
+
       return NextResponse.json({
-        text: finalAssistantText,
+        text: finalText,
         toolLogs: toolLogs
       });
 
@@ -385,7 +472,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
       });
 
       const apiMessages: any[] = [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: RESEARCH_PROMPT },
         ...messages.map((m: any) => ({
           role: m.role,
           content: m.text || m.content || ""
@@ -396,9 +483,10 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
       let iterations = 0;
       const maxIterations = 5;
 
+      // STEP 1 & 2: Research and Answer Loop
       while (keepRunning && iterations < maxIterations) {
         iterations++;
-        console.log(`Agent Loop Turn ${iterations}`);
+        console.log(`OpenAI Agent Loop Turn ${iterations}`);
 
         toolLogs.push({
           id: `llm-turn-${iterations}`,
@@ -445,7 +533,11 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
               if (tc.function.name === "read_pages") {
                 const { source, pages } = parsedArgs;
                 if (!source || !pages || !Array.isArray(pages)) throw new Error("Missing parameters");
-                const contents = pages.map((p: number) => `--- Page ${p} (${source}) ---\n${readPage(source, p)}`);
+                const contents = pages.map((p: number) => {
+                  const pageText = readPage(source, p);
+                  retrievedPagesContent.push(`Source: ${source}, Page ${p}:\n${pageText}`);
+                  return `--- Page ${p} (${source}) ---\n${pageText}`;
+                });
                 result = contents.join("\n\n");
                 summary = `Loaded ${pages.length} pages of '${source}'`;
               } else if (tc.function.name === "grep") {
@@ -454,6 +546,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
                 const matches = runGrep(query, source);
                 result = JSON.stringify(matches, null, 2);
                 summary = `Searched for "${query}". Found ${matches.length} matches.`;
+                retrievedPagesContent.push(`Grep matches for query "${query}":\n${result}`);
               } else {
                 throw new Error(`Unknown tool: ${tc.function.name}`);
               }
@@ -487,8 +580,42 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
         }
       }
 
+      // STEP 2 Parsing: Extract technical response and decision JSON block
+      const { decision, cleanText } = extractVisualDecision(finalAssistantText);
+      console.log(`[Step 2] Visual needed evaluation:`, decision);
+
+      let finalText = cleanText;
+
+      // STEP 3: Generates visual layout code if evaluated true
+      if (decision.visual_needed) {
+        console.log(`[Step 3] Launching OpenAI Visual Generator...`);
+        const userQuery = messages[messages.length - 1].text || messages[messages.length - 1].content || "";
+        const visualQuery = `User Query: ${userQuery}
+
+Manual Page Extracts:
+${retrievedPagesContent.length > 0 ? retrievedPagesContent.join("\n\n") : "No specific manual pages retrieved."}
+
+Technical Text Answer:
+${cleanText}`;
+
+        const visualResponse = await client.chat.completions.create({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: "system", content: VISUAL_GENERATOR_PROMPT },
+            { role: "user", content: visualQuery }
+          ],
+          stream: false
+        });
+
+        const visualCode = visualResponse.choices[0].message.content || "";
+
+        if (visualCode.trim()) {
+          finalText = `${cleanText}\n\n${visualCode.trim()}`;
+        }
+      }
+
       return NextResponse.json({
-        text: finalAssistantText,
+        text: finalText,
         toolLogs: toolLogs
       });
     }
