@@ -7,7 +7,7 @@ import * as path from "path";
 export const dynamic = "force-dynamic";
 
 
-const OPENAI_MODEL = "gpt-5.4-mini";
+const OPENAI_MODEL = "gpt-4o-mini";
 
 const tools = [
   {

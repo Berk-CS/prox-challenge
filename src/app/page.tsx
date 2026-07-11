@@ -546,6 +546,33 @@ export default function Home() {
       }
     }
 
+    // Fallback: Parse markdown code blocks containing React components
+    const mdCodeBlockRegex = /```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g;
+    let mdMatch;
+    let fallbackCount = 0;
+    while ((mdMatch = mdCodeBlockRegex.exec(text)) !== null) {
+      const [_, lang, codeContent] = mdMatch;
+      const code = codeContent.trim();
+      if (code.includes("export default") || code.includes("import React") || code.includes("return (") || code.includes("return  (")) {
+        const exists = Object.values(found).some(art => art.content.trim() === code);
+        if (!exists) {
+          fallbackCount++;
+          const id = `fallback-${Date.now()}-${fallbackCount}`;
+          let title = "Generated Component";
+          const exportDefaultMatch = code.match(/export\s+default\s+([A-Z]\w+)/);
+          if (exportDefaultMatch) {
+            title = exportDefaultMatch[1].replace(/([A-Z])/g, " $1").trim();
+          } else {
+            const funcMatch = code.match(/(?:function|const)\s+([A-Z]\w+)/);
+            if (funcMatch) {
+              title = funcMatch[1].replace(/([A-Z])/g, " $1").trim();
+            }
+          }
+          found[id] = { id, type: "react", title, content: code };
+        }
+      }
+    }
+
     if (Object.keys(found).length > 0) {
       setArtifacts((prev) => {
         let hasChanges = false;
@@ -924,6 +951,13 @@ Please analyze this error, fix your code, and output the entire corrected React 
                         content={msg.text
                           .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, "")
                           .replace(/<antArtifact[\s\S]*$/g, "")
+                          .replace(/```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g, (match, lang, codeContent) => {
+                            const code = codeContent.trim();
+                            if (code.includes("export default") || code.includes("import React") || code.includes("return (") || code.includes("return  (")) {
+                              return ""; // Hide the raw code block from the chat layout
+                            }
+                            return match;
+                          })
                         }
                       />
                       
@@ -942,6 +976,51 @@ Please analyze this error, fix your code, and output the entire corrected React 
                             <span className="text-xs font-bold font-mono tracking-wide">Open: {match[3]}</span>
                           </button>
                         ))}
+                        
+                        {/* Fallback React Code Blocks */}
+                        {(() => {
+                          const mdCodeBlockRegex = /```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g;
+                          const buttons: React.ReactNode[] = [];
+                          let mdMatch;
+                          let count = 0;
+                          while ((mdMatch = mdCodeBlockRegex.exec(msg.text)) !== null) {
+                            const [_, lang, codeContent] = mdMatch;
+                            const code = codeContent.trim();
+                            if (code.includes("export default") || code.includes("import React") || code.includes("return (") || code.includes("return  (")) {
+                              count++;
+                              const id = `fallback-${msg.id}-${count}`;
+                              let title = "Generated Component";
+                              const exportDefaultMatch = code.match(/export\s+default\s+([A-Z]\w+)/);
+                              if (exportDefaultMatch) {
+                                title = exportDefaultMatch[1].replace(/([A-Z])/g, " $1").trim();
+                              } else {
+                                const funcMatch = code.match(/(?:function|const)\s+([A-Z]\w+)/);
+                                if (funcMatch) {
+                                  title = funcMatch[1].replace(/([A-Z])/g, " $1").trim();
+                                }
+                              }
+                              
+                              buttons.push(
+                                <button
+                                  key={`fallback-btn-${msg.id}-${count}`}
+                                  onClick={() => {
+                                    setArtifacts(prev => ({
+                                      ...prev,
+                                      [id]: { id, type: "react", title, content: code }
+                                    }));
+                                    setActiveArtifactId(id);
+                                    setActiveTab("preview");
+                                  }}
+                                  className="flex items-center space-x-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded px-2.5 py-1.5 transition-colors shadow-sm cursor-pointer select-none"
+                                >
+                                  <Layers className="h-4 w-4" />
+                                  <span className="text-xs font-bold font-mono tracking-wide">Open: {title}</span>
+                                </button>
+                              );
+                            }
+                          }
+                          return buttons;
+                        })()}
                         
                         {msg.toolLogs?.filter(t => t.toolName === "read_pages").map((log, i) => {
                           const { source, pages } = log.arguments || {};
