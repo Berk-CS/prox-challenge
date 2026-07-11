@@ -280,7 +280,7 @@ To create an artifact, wrap it in opening and closing '<antArtifact>' tags:
 
         const response = await client.messages.create({
           model: "claude-sonnet-5",
-          max_tokens: 4096,
+          max_tokens: 20000,  // just in case ai goes crazy
           system: SYSTEM_PROMPT,
           cache_control: { type: "ephemeral" },
           messages: apiMessages,
