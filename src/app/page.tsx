@@ -1233,13 +1233,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
               {isLoading ? "Analyzing..." : "Ready"}
             </span>
           </div>
-          <button
-            onClick={handleClearChat}
-            className="px-2.5 py-1 text-[10px] font-mono border border-border rounded bg-black/30 text-gray-400 hover:text-error hover:border-error/40 transition-colors focus:outline-none cursor-pointer select-none"
-            title="Clear Chat History"
-          >
-            Clear Chat
-          </button>
+
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={`text-gray-400 hover:text-primary transition-colors focus:outline-none ${showSettings ? "text-primary" : ""}`}
@@ -1365,6 +1359,15 @@ Please analyze this error, fix your code, and output the entire corrected React 
               <span>MANUAL EXPLORER</span>
             </button>
           </div>
+          
+          <button
+            onClick={handleClearChat}
+            className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border border-error/30 rounded text-error hover:bg-error/10 hover:border-error/50 transition-all cursor-pointer select-none font-bold"
+            title="Clear Chat History"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>CLEAR CHAT</span>
+          </button>
         </div>
 
         {/* Tab Body Viewports */}
