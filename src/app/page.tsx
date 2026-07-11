@@ -470,7 +470,20 @@ export default function Home() {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    const savedDevMode = localStorage.getItem("omni-pro-dev-mode");
+    if (savedDevMode !== null) setIsDeveloperMode(savedDevMode === "true");
+    
+    const savedModel = localStorage.getItem("omni-pro-model");
+    if (savedModel === "openai" || savedModel === "claude") setSelectedModel(savedModel as "openai" | "claude");
   }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("omni-pro-dev-mode", isDeveloperMode.toString());
+      localStorage.setItem("omni-pro-model", selectedModel);
+    }
+  }, [isDeveloperMode, selectedModel, isMounted]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -934,7 +947,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
               VULCAN OMNIPRO 220
             </h1>
             <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mt-1">
-              Multimodal Reasoning Workspace
+              Technical Support Specialist
             </p>
           </div>
         </div>
