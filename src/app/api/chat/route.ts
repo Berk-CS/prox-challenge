@@ -6,7 +6,7 @@ import * as path from "path";
 
 export const dynamic = "force-dynamic";
 
-const OPENAI_MODEL = "gpt-5.4-mini";
+const OPENAI_MODEL = "gpt-5.4";
 
 const tools = [
   {
@@ -423,6 +423,19 @@ Format exactly like this:
       const { decision, cleanText } = extractVisualDecision(finalAssistantText);
       console.log(`[Step 2] Visual needed evaluation:`, decision);
 
+      toolLogs.push({
+        id: `visual-decision-${Date.now()}`,
+        type: "llm_turn",
+        toolName: "Step 2: Visual Asset Decision",
+        arguments: {
+          raw_llm_response: finalAssistantText
+        },
+        status: "completed",
+        resultSummary: `Visual needed: ${decision.visual_needed}${decision.visual_needed ? ` (${decision.visual_type})` : ""}`,
+        rawOutput: JSON.stringify(decision, null, 2),
+        timestamp: new Date().toLocaleTimeString()
+      });
+
       let finalText = cleanText;
 
       // STEP 3: Generates visual layout code if evaluated true
@@ -453,6 +466,19 @@ ${cleanText}`;
             visualCode += block.text;
           }
         }
+
+        toolLogs.push({
+          id: `visual-generation-${Date.now()}`,
+          type: "llm_turn",
+          toolName: "Step 3: Visual Generator Code Output",
+          arguments: {
+            prompt_sent_to_generator: visualQuery
+          },
+          status: visualCode.trim() ? "completed" : "failed",
+          resultSummary: visualCode.trim() ? `Generated code for: "${decision.proposed_title}"` : "Failed to generate code",
+          rawOutput: visualCode,
+          timestamp: new Date().toLocaleTimeString()
+        });
 
         if (visualCode.trim()) {
           finalText = `${cleanText}\n\n${visualCode.trim()}`;
@@ -584,6 +610,19 @@ ${cleanText}`;
       const { decision, cleanText } = extractVisualDecision(finalAssistantText);
       console.log(`[Step 2] Visual needed evaluation:`, decision);
 
+      toolLogs.push({
+        id: `visual-decision-${Date.now()}`,
+        type: "llm_turn",
+        toolName: "Step 2: Visual Asset Decision",
+        arguments: {
+          raw_llm_response: finalAssistantText
+        },
+        status: "completed",
+        resultSummary: `Visual needed: ${decision.visual_needed}${decision.visual_needed ? ` (${decision.visual_type})` : ""}`,
+        rawOutput: JSON.stringify(decision, null, 2),
+        timestamp: new Date().toLocaleTimeString()
+      });
+
       let finalText = cleanText;
 
       // STEP 3: Generates visual layout code if evaluated true
@@ -608,6 +647,19 @@ ${cleanText}`;
         });
 
         const visualCode = visualResponse.choices[0].message.content || "";
+
+        toolLogs.push({
+          id: `visual-generation-${Date.now()}`,
+          type: "llm_turn",
+          toolName: "Step 3: Visual Generator Code Output",
+          arguments: {
+            prompt_sent_to_generator: visualQuery
+          },
+          status: visualCode.trim() ? "completed" : "failed",
+          resultSummary: visualCode.trim() ? `Generated code for: "${decision.proposed_title}"` : "Failed to generate code",
+          rawOutput: visualCode,
+          timestamp: new Date().toLocaleTimeString()
+        });
 
         if (visualCode.trim()) {
           finalText = `${cleanText}\n\n${visualCode.trim()}`;
