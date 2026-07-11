@@ -322,7 +322,7 @@ Format exactly like this:
 
         const response = await client.messages.create({
           model: "claude-sonnet-5",
-          max_tokens: 20000,
+          max_tokens: 50000,
           system: RESEARCH_PROMPT,
           cache_control: { type: "ephemeral" },
           messages: apiMessages,

@@ -401,6 +401,14 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
 // ----------------------------------------------------
 // MAIN APP COMPONENT
 // ----------------------------------------------------
+const PRESET_MESSAGES = [
+  "What's the duty cycle for MIG welding at 200A on 240V?",
+  "I'm getting porosity in my flux-cored welds. What should I check?",
+  "What polarity setup do I need for TIG welding? Which socket does the ground clamp go in?",
+  "generate interactive content: a duty cycle calculator",
+  "I just bought a 10lb spool of steel wire and I'm looking at this wire feed tensioner inside the door. The manual talks about V-grooves, knurled grooves, and a specific tension scale. Can you show me exactly how to flip the roller for my wire size and how tight to screw down the tensioner knob?"
+];
+
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -1124,15 +1132,20 @@ Please analyze this error, fix your code, and output the entire corrected React 
         {/* Chat input */}
         <div className="border-t border-border bg-background py-4 space-y-3">
           {!isSidebar && (
-            <div className="flex">
-              <button
-                type="button"
-                onClick={() => setInput("generate interactive content: a duty cycle calculator")}
-                className="flex items-center space-x-1.5 px-2.5 py-1 text-[11px] font-mono text-primary/80 hover:text-primary bg-black/40 border border-border hover:border-primary/40 rounded transition-all cursor-pointer select-none"
-              >
-                <LucideIcons.Sparkles className="h-3.5 w-3.5 text-accent" />
-                <span>Try: "generate interactive content: a duty cycle calculator"</span>
-              </button>
+            <div className="flex flex-col space-y-2">
+              <span className="text-[10px] uppercase tracking-wider text-gray-500 font-mono font-bold select-none">Suggested Inquiries</span>
+              <div className="flex flex-wrap gap-2 max-h-[145px] overflow-y-auto pr-1">
+                {PRESET_MESSAGES.map((msg, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setInput(msg)}
+                    className="text-left px-2.5 py-1.5 text-[11px] font-sans text-gray-300 hover:text-primary bg-black/40 hover:bg-black/60 border border-border hover:border-primary/40 rounded transition-all cursor-pointer select-none leading-normal"
+                  >
+                    {msg}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div className="flex items-center space-x-2 rounded border border-border bg-black/45 px-3 py-2 focus-within:border-primary transition-all">
