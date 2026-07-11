@@ -1,26 +1,11 @@
-# Vulcan OmniPro 220 — AI Welder Console
+# Vulcan OmniPro 220 — AI Welder Technical Specialist
 
-An intelligent, multimodal reasoning agent workspace designed for the [Vulcan OmniPro 220 multiprocess welder](https://www.harborfreight.com/omnipro-220-industrial-multiprocess-welder-with-120240v-input-57812.html). Powered by the **OpenAI and Anthropic Agent SDKs** and built on Next.js, this application helps users set up, configure, and troubleshoot their welder directly from an interactive dashboard.
+This is the intelligent, multimodal reasoning agent designed for the [Vulcan OmniPro 220 multiprocess welder](https://www.harborfreight.com/omnipro-220-industrial-multiprocess-welder-with-120240v-input-57812.html). It helps users set up, configure, and troubleshoot their welder directly from an interactive dashboard. Tech stack: **OpenAI and Anthropic Agent SDKs** and Next.js.
 
 <img src="product.webp" alt="Vulcan OmniPro 220" width="400" /> <img src="product-inside.webp" alt="Vulcan OmniPro 220 — inside panel" width="400" />
 
----
 
-## Key Features
-
-1.  **Deep Technical Accuracy**: The agent queries page-level markdown manuals dynamically using the Agent SDK's `Read` and `Grep` search tools, verifying exact amperage settings, polarity configurations, and duty cycles.
-2.  **Live Action Telemetry Logs**: Real-time logging of the agent's reasoning process and tool runs is displayed in the workspace, letting you see exactly what page the agent is checking.
-3.  **Industrial Garage Theme**: High-contrast, custom-designed dark theme (deep carbon backgrounds, yellow warning stripes, plasma orange highlights, and green glowing LCD telemetry tags).
-4.  **AI Artifact Sandboxes**: Rich sandboxed visualizers that parse custom `<antArtifact>` streams from the agent and render:
-    *   **Interactive React Components** (`application/vnd.ant.react`) using `react-runner` to mount fully functional calculators, joint layout selectors, and weld thickness configurators.
-    *   **Mermaid Flowcharts** (`application/vnd.ant.mermaid`) for guided step-by-step diagnostic paths.
-    *   **Vector SVGs** (`image/svg+xml`) of socket pins and cables setup.
-    *   **HTML Frames** (`text/html`) for styled custom preview pages.
-5.  **Manual Page & Asset Explorer**: Browse manual contents and extracted page images (like weld defect pictures from page 38) side-by-side with the active assistant chat.
-
----
-
-## Getting Started
+## Getting Started ~ 1 min setup
 
 Follow these steps to run the application locally.
 
@@ -38,7 +23,7 @@ Copy the `.env.example` file to `.env` and plug in your Anthropic and OpenAI API
 ```bash
 cp .env.example .env
 ```
-Open `.env` and edit:
+Open `.env` and edit (NOTE: you only need one of the two keys, depending on which agent you want to use):
 ```
 ANTHROPIC_API_KEY=your-api-key-here
 OPENAI_API_KEY=your-api-key-here
@@ -67,34 +52,9 @@ python scripts/extract_manuals.py
 
 ---
 
-## Workspace Architecture
+## Architecture & Design Decisions
 
-```mermaid
-graph TD
-    PDF[Owner Manual PDFs] -->|extract_manuals.py| Extracted[public/extracted/]
-    Extracted -->|Text & Images| App[Next.js Client app]
-    App -->|User Message| API[src/app/api/chat/route.ts]
-    API -->|OpenAI / Claude SDK| Agent[Agent Runner Engine]
-    Agent -->|Read / Grep| Extracted
-    Agent -->|Streaming SSE Events| API
-    API -->|SSE Stream| App
-    App -->|Parse antArtifact| Preview[Right Workspace Panel]
-```
 
-### Key Source Files
-*   [extract_manuals.py](scripts/extract_manuals.py): Pipeline parsing PDFs into structured pages and image assets.
-*   [route.ts](src/app/api/chat/route.ts): Connects to the OpenAI and Claude Agent SDKs, restricting them to manual reading tools. Secured with path-traversal sanitization and bad request handling.
-*   [page.tsx](src/app/page.tsx): Main console interface containing chat, tool logs, manual explorer, and sandbox preview tabs. Rebuilt with optimized React hook memoization and custom error UI banners.
-*   [globals.css](src/app/globals.css): Visual style system containing colors, telemetry glow styling, and warning hazard striping.
+## Unique features & other highlights
 
----
-
-## Polished Architecture & Security
-
-This workspace has been polished and refactored for production-grade presentation:
-- **Type Safety**: Fully validated TypeScript compilation for OpenAI and Anthropic API message-routing loops.
-- **Directory Isolation**: Hardened server-side file access endpoints. Both page lookup and keyword scanning scripts ensure target paths resolve strictly within the static manuals folder, preventing arbitrary path traversal.
-- **Payload Verification**: API endpoints safely parse request streams and return descriptive bad request headers instead of generic uncaught exceptions.
-- **React Hook Stability**: State callbacks and rendering utilities are wrapped in stable, dependency-tracked `useCallback` hooks, avoiding stale scopes and minimizing DOM diff operations.
-- **Polished Errors**: Network and completion failure states are gracefully mapped to structured danger alert UI components instead of raw trace messages.
 
