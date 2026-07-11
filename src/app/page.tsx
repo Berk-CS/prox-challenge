@@ -154,6 +154,14 @@ const SandpackSandbox = ({
   const [hasCompiledOnce, setHasCompiledOnce] = useState(false);
   const preparedCode = useMemo(() => prepareCodeForSandpack(code), [code]);
 
+  // Failsafe: Ensure overlay is hidden after 1.5 seconds if compilation event is missed
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasCompiledOnce(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [code]);
+
   const handleSuccess = useCallback(() => {
     setHasCompiledOnce(true);
     onSuccess();
@@ -709,6 +717,13 @@ export default function Home() {
   const handleSandboxSuccess = useCallback(() => {
     setSandboxError(null);
     setRetryCount(0);
+  }, []);
+
+  const handleRefreshSandbox = useCallback(() => {
+    setPreviewSubTab("code");
+    setTimeout(() => {
+      setPreviewSubTab("view");
+    }, 50);
   }, []);
 
   const handleAutoRetry = useCallback((errorMsg: string) => {
@@ -1286,28 +1301,14 @@ Please analyze this error, fix your code, and output the entire corrected React 
                           <span className="text-[10px] text-gray-600 bg-black/35 px-2 py-0.5 rounded border border-border">
                             {activeArtifact.type}
                           </span>
-
-                          <button
-                            onClick={async () => {
-                              if (!activeArtifact) return;
-                              await navigator.clipboard.writeText(activeArtifact.content);
-                              setCopied(true);
-                              setTimeout(() => setCopied(false), 2000);
-                            }}
-                            className="flex items-center space-x-1 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
-                          >
-                            {copied ? (
-                              <>
-                                <LucideIcons.CheckCircle className="h-3 w-3 text-success animate-pulse" />
-                                <span className="text-success font-bold text-[9px]">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <LucideIcons.FileText className="h-3 w-3" />
-                                <span className="text-[9px]">Copy Code</span>
-                              </>
-                            )}
-                          </button>
+                           <button
+                             onClick={handleRefreshSandbox}
+                             className="flex items-center space-x-1.5 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
+                             title="Refresh Component"
+                           >
+                             <LucideIcons.RefreshCw className="h-3.5 w-3.5" />
+                             <span className="text-[9px]">Refresh</span>
+                           </button>
                           
                           <div className="flex rounded border border-border overflow-hidden">
                             <button
@@ -1328,14 +1329,37 @@ Please analyze this error, fix your code, and output the entire corrected React 
                       
                       <div className="flex-1 overflow-auto p-4 bg-black/20">
                         {previewSubTab === "code" ? (
-                          <textarea
-                            value={localCode}
-                            onChange={(e) => {
-                              setLocalCode(e.target.value);
-                              debouncedUpdateArtifact(e.target.value);
-                            }}
-                            className="w-full min-h-[500px] flex-1 font-mono text-xs text-primary bg-black/35 p-3 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
-                          />
+                          <div className="relative w-full h-full flex-1">
+                            <button
+                              onClick={async () => {
+                                if (!activeArtifact) return;
+                                await navigator.clipboard.writeText(localCode);
+                                setCopied(true);
+                                setTimeout(() => setCopied(false), 2000);
+                              }}
+                              className="absolute top-2 right-4 flex items-center space-x-1.5 px-2.5 py-1 text-[10px] bg-black/70 hover:bg-black/90 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono z-10"
+                            >
+                              {copied ? (
+                                <>
+                                  <LucideIcons.CheckCircle className="h-3 w-3 text-success animate-pulse" />
+                                  <span className="text-success font-bold text-[9px]">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <LucideIcons.FileText className="h-3 w-3" />
+                                  <span className="text-[9px]">Copy</span>
+                                </>
+                              )}
+                            </button>
+                            <textarea
+                              value={localCode}
+                              onChange={(e) => {
+                                setLocalCode(e.target.value);
+                                debouncedUpdateArtifact(e.target.value);
+                              }}
+                              className="w-full min-h-[500px] h-full flex-1 font-mono text-xs text-primary bg-black/35 p-3 pr-16 rounded border border-border outline-none focus:border-primary/50 whitespace-pre overflow-auto leading-relaxed resize-y"
+                            />
+                          </div>
                         ) : (
                           <div className="h-full">
                             {/* Live render condition */}
