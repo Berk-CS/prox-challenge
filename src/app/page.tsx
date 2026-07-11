@@ -420,6 +420,16 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Automatically adjust textarea height based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  }, [input]);
 
   // Cleanup speech synthesis on unmount
   useEffect(() => {
@@ -870,121 +880,124 @@ Please analyze this error, fix your code, and output the entire corrected React 
                   }`}
                 >
                   {/* Render tool logs first if role is assistant */}
-                  {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && (
-                    isDeveloperMode ? (
-                      <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
-                        <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
-                          <Cpu className="h-3.5 w-3.5" />
-                          <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
-                        </div>
-                        <div className="space-y-2">
-                          {msg.toolLogs.map((log) => {
-                            const isExpanded = !!expandedLogs[log.id];
-                            return (
-                              <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
-                                <div
-                                  onClick={() => {
-                                    setExpandedLogs((prev) => ({
-                                      ...prev,
-                                      [log.id]: !prev[log.id]
-                                    }));
-                                  }}
-                                  className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
-                                >
-                                  <div className="flex items-start space-x-2">
-                                    <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
-                                    <span className="font-mono text-[10.5px]">
-                                      {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
-                                      {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
-                                      {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
-                                      <span className="text-primary font-bold">{log.toolName}</span>
-                                      {log.resultSummary && (
-                                        <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
-                                      )}
-                                    </span>
-                                  </div>
-                                  <div className="text-gray-500 pl-2">
-                                    {isExpanded ? (
-                                      <LucideIcons.ChevronDown className="h-3 w-3 inline" />
-                                    ) : (
-                                      <LucideIcons.ChevronRight className="h-3 w-3 inline" />
+                  {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && isDeveloperMode && (
+                    <div className="mb-3 rounded border border-border/40 bg-black/25 p-2.5 font-mono text-[11px] text-gray-400 space-y-2 select-none w-full">
+                      <div className="flex items-center space-x-2 text-primary border-b border-border/20 pb-1 mb-2 font-bold uppercase tracking-wider text-[10px]">
+                        <Cpu className="h-3.5 w-3.5" />
+                        <span>AGENT RUNTIME LOGS (CLICK TO EXPAND)</span>
+                      </div>
+                      <div className="space-y-2">
+                        {msg.toolLogs.map((log) => {
+                          const isExpanded = !!expandedLogs[log.id];
+                          return (
+                            <div key={log.id} className="border-b border-border/10 pb-1.5 last:border-b-0">
+                              <div
+                                onClick={() => {
+                                  setExpandedLogs((prev) => ({
+                                    ...prev,
+                                    [log.id]: !prev[log.id]
+                                  }));
+                                }}
+                                className="flex items-start justify-between cursor-pointer hover:bg-white/5 p-1 rounded transition-colors"
+                              >
+                                <div className="flex items-start space-x-2">
+                                  <span className="text-gray-500 font-mono">[{log.timestamp}]</span>
+                                  <span className="font-mono text-[10.5px]">
+                                    {log.status === "running" && <Loader2 className="h-3 w-3 text-accent animate-spin inline mr-1" />}
+                                    {log.status === "completed" && <CheckCircle className="h-3 w-3 text-success inline mr-1" />}
+                                    {log.status === "failed" && <AlertTriangle className="h-3 w-3 text-error inline mr-1" />}
+                                    <span className="text-primary font-bold">{log.toolName}</span>
+                                    {log.resultSummary && (
+                                      <span className="text-gray-500 ml-2">➔ {log.resultSummary}</span>
                                     )}
-                                  </div>
+                                  </span>
                                 </div>
+                                <div className="text-gray-500 pl-2">
+                                  {isExpanded ? (
+                                    <LucideIcons.ChevronDown className="h-3 w-3 inline" />
+                                  ) : (
+                                    <LucideIcons.ChevronRight className="h-3 w-3 inline" />
+                                  )}
+                                </div>
+                              </div>
 
-                                {/* Collapsible Details Drawer */}
-                                {isExpanded && (
-                                  <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
+                              {/* Collapsible Details Drawer */}
+                              {isExpanded && (
+                                <div className="pl-6 pr-2 py-2 mt-1.5 space-y-2 border-l border-primary/30 bg-black/40 rounded text-[10.5px] select-text">
+                                  <div>
+                                    <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                      {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                                    </span>
+                                    <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
+                                      {typeof log.arguments === "string"
+                                        ? log.arguments
+                                        : JSON.stringify(log.arguments, null, 2)}
+                                    </pre>
+                                  </div>
+                                  {log.rawOutput && (
                                     <div>
-                                      <span className="text-accent font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                        {log.type === "llm_turn" ? "Turn Context / Request Prompt:" : "Arguments / Parameters:"}
+                                      <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
+                                        {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
                                       </span>
-                                      <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded overflow-x-auto text-[9.5px] text-gray-300 font-mono max-h-40 overflow-y-auto whitespace-pre-wrap leading-normal">
-                                        {typeof log.arguments === "string"
-                                          ? log.arguments
-                                          : JSON.stringify(log.arguments, null, 2)}
+                                      <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
+                                        {log.rawOutput}
                                       </pre>
                                     </div>
-                                    {log.rawOutput && (
-                                      <div>
-                                        <span className="text-success font-bold uppercase tracking-widest text-[8.5px] font-mono block">
-                                          {log.type === "llm_turn" ? "AI Response Output:" : "Raw Tool Execution Output:"}
-                                        </span>
-                                        <pre className="mt-1 p-1.5 bg-[#09090b] border border-border/40 rounded max-h-60 overflow-y-auto overflow-x-auto text-[9.5px] text-gray-300 font-mono whitespace-pre-wrap leading-normal">
-                                          {log.rawOutput}
-                                        </pre>
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <div className="mb-3 rounded border border-border/20 bg-black/10 p-2.5 font-mono text-[10.5px] text-gray-400 space-y-1.5 select-none w-full">
-                        <div className="flex items-center space-x-1.5 text-primary/80 font-bold uppercase tracking-wider text-[9px] border-b border-border/10 pb-1 mb-1">
-                          <Cpu className="h-3 w-3" />
-                          <span>Assistant Process Log</span>
-                        </div>
-                        <div className="space-y-1 text-[10px]">
-                          {msg.toolLogs.map((log) => {
-                            let description = "Processing turn...";
-                            if (log.toolName === "read_pages") {
-                              description = "Checking welder reference guide and instruction pages.";
-                            } else if (log.toolName === "grep") {
-                              description = "Searching welder documentation database.";
-                            } else if (log.toolName.includes("LLM Completion")) {
-                              description = "Formulating parameter adjustments and generating layouts.";
-                            }
-                            return (
-                              <div key={log.id} className="flex items-center space-x-1.5">
-                                <span className="h-1 w-1 rounded-full bg-accent" />
-                                <span>{description}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )
+                    </div>
                   )}
 
                   {msg.role === "assistant" ? (
                     <div className="flex flex-col w-full">
-                      <MarkdownRenderer
-                        content={msg.text
-                          .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, "")
-                          .replace(/<antArtifact[\s\S]*$/g, "")
-                          .replace(/```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g, (match, lang, codeContent) => {
-                            const code = codeContent.trim();
-                            if (code.includes("export default") || code.includes("import React") || code.includes("return (") || code.includes("return  (")) {
-                              return ""; // Hide the raw code block from the chat layout
-                            }
-                            return match;
-                          })
-                        }
-                      />
+                      {msg.text === "Thinking..." ? (
+                        <div className="flex flex-col space-y-3 py-2 w-full max-w-sm">
+                          <div className="flex items-center space-x-2.5 text-xs font-mono text-gray-300">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span className="font-bold tracking-wide animate-pulse">
+                              {(() => {
+                                if (!msg.toolLogs || msg.toolLogs.length === 0) {
+                                  return "Consulting librarian index...";
+                                }
+                                const activeLog = msg.toolLogs[msg.toolLogs.length - 1];
+                                if (activeLog.status === "running") {
+                                  if (activeLog.toolName === "read_pages") return "Reading manual specs and charts...";
+                                  if (activeLog.toolName === "grep") return "Searching documents for matching terms...";
+                                  return `Running: ${activeLog.toolName}...`;
+                                }
+                                if (activeLog.toolName === "read_pages") return "Analyzing reference data...";
+                                if (activeLog.toolName === "grep") return "Processing search matches...";
+                                if (activeLog.toolName.includes("Step 3") || activeLog.toolName.includes("Generator") || activeLog.toolName.includes("Visual")) return "Generating interactive dashboard...";
+                                return "Reasoning about configurations...";
+                              })()}
+                            </span>
+                          </div>
+                          <div className="flex space-x-1.5 items-center">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
+                          </div>
+                        </div>
+                      ) : (
+                        <MarkdownRenderer
+                          content={msg.text
+                            .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, "")
+                            .replace(/<antArtifact[\s\S]*$/g, "")
+                            .replace(/```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g, (match, lang, codeContent) => {
+                              const code = codeContent.trim();
+                              if (code.includes("export default") || code.includes("import React") || code.includes("return (") || code.includes("return  (")) {
+                                return ""; // Hide the raw code block from the chat layout
+                              }
+                              return match;
+                            })
+                          }
+                        />
+                      )}
                       
                       {/* Interactive Action Buttons */}
                       <div className="flex flex-wrap gap-2 mt-3 w-full">
@@ -1095,6 +1108,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
           )}
           <div className="flex items-center space-x-2 rounded border border-border bg-black/45 px-3 py-2 focus-within:border-primary transition-all">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -1105,7 +1119,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
               }}
               placeholder={isSidebar ? "Ask assistant..." : "Ask about duty cycle parameters, wire speed calibration, polarity sockets..."}
               rows={1}
-              className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600"
+              className="flex-1 resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-gray-600 max-h-[200px]"
             />
             <button
               onClick={toggleListening}
