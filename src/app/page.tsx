@@ -45,6 +45,7 @@ interface Message {
   timestamp: string;
   toolLogs?: ToolLog[];
   isError?: boolean;
+  isGeneratingVisual?: boolean;
 }
 
 interface ExtractedArtifact {
@@ -755,7 +756,7 @@ export default function Home() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
-            ? { ...m, text: data.text, toolLogs: data.toolLogs }
+            ? { ...m, text: data.text, toolLogs: data.toolLogs, isGeneratingVisual: data.decision?.visual_needed }
             : m
         )
       );
@@ -776,6 +777,113 @@ export default function Home() {
         if (isReadAloud) {
           toggleSpeak(data.text, assistantMsgId);
         }
+      }
+
+      if (data.decision && data.decision.visual_needed) {
+        const proposedTitle = data.decision.proposed_title || "Interactive Component";
+        const visualType = data.decision.visual_type || "react";
+        const placeholderId = "dynamic-welder-asset";
+        
+        const placeholderCode = visualType === "react" 
+          ? `import React from "react";
+
+export default function App() {
+  return (
+    <div style={{
+      minHeight: "400px",
+      background: "#0d0d0f",
+      color: "#fbbf24",
+      fontFamily: "monospace",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 16
+    }}>
+      <svg style={{
+        animation: "spin 1s linear infinite",
+        width: 32,
+        height: 32
+      }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" strokeDasharray="30" strokeLinecap="round" />
+      </svg>
+      <style>{\`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      \`}</style>
+      <div style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        Generating visual dashboard...
+      </div>
+    </div>
+  );
+}`
+          : `graph TD
+    A[Generating visual layout...]`;
+
+        setArtifacts((prev) => ({
+          ...prev,
+          [placeholderId]: {
+            id: placeholderId,
+            title: proposedTitle,
+            type: visualType,
+            content: placeholderCode
+          }
+        }));
+        setActiveArtifactId(placeholderId);
+        
+        (async () => {
+          try {
+            const visualRes = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                messages: [...messages.filter(m => m.role !== 'system'), userMessage],
+                model: selectedModel,
+                generateVisual: true,
+                userQuery: textToSend,
+                cleanText: data.text,
+                retrievedContent: data.retrievedContent
+              })
+            });
+            
+            if (!visualRes.ok) {
+              throw new Error(`Failed to generate visual: ${visualRes.statusText}`);
+            }
+            
+            const visualData = await visualRes.json();
+            
+            if (visualData.text) {
+              // Append to messages list so that state reflects full text (and the button renders)
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? { ...m, text: `${data.text}\n\n${visualData.text}`, isGeneratingVisual: false }
+                    : m
+                )
+              );
+              
+              // Run parseArtifacts to update code with the generated code
+              parseArtifacts(`${data.text}\n\n${visualData.text}`);
+            }
+          } catch (visualErr) {
+            console.error("Visual generation error:", visualErr);
+            setArtifacts((prev) => ({
+              ...prev,
+              [placeholderId]: {
+                ...prev[placeholderId],
+                content: `// Error generating component: ${visualErr instanceof Error ? visualErr.message : "Request failed"}`
+              }
+            }));
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, isGeneratingVisual: false }
+                  : m
+              )
+            );
+          }
+        })();
       }
 
     } catch (err: unknown) {
@@ -1041,6 +1149,13 @@ Please analyze this error, fix your code, and output the entire corrected React 
                             })
                           }
                         />
+                      )}
+
+                      {msg.isGeneratingVisual && (
+                        <div className="mt-3 flex items-center space-x-2 rounded border border-accent/20 bg-accent/5 px-3 py-2 text-xs font-mono text-accent select-none w-max">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-accent" />
+                          <span className="font-semibold tracking-wide animate-pulse">Generating interactive layout...</span>
+                        </div>
                       )}
 
                       {/* Interactive Action Buttons */}

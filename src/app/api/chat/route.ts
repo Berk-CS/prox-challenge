@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
     }
 
-    const { messages, model } = body;
+    const { messages, model, generateVisual, userQuery, cleanText, retrievedContent } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "No messages provided." }, { status: 400 });
@@ -239,6 +239,58 @@ Format exactly like this:
 </antArtifact>`;
 
     const isAnthropic = model === "claude" || model === "anthropic" || model === "claude-code";
+
+    if (generateVisual) {
+      const visualQuery = `User Query: ${userQuery || ""}
+
+Manual Page Extracts:
+${retrievedContent || "No specific manual pages retrieved."}
+
+Technical Text Answer:
+${cleanText || ""}`;
+
+      if (isAnthropic) {
+        const client = new Anthropic({
+          apiKey: process.env.ANTHROPIC_API_KEY
+        });
+
+        const visualResponse = await client.messages.create({
+          model: "claude-sonnet-5",
+          max_tokens: 4096,
+          system: VISUAL_GENERATOR_PROMPT,
+          messages: [
+            { role: "user", content: visualQuery }
+          ],
+          stream: false
+        });
+
+        let visualCode = "";
+        for (const block of visualResponse.content) {
+          if (block.type === "text") {
+            visualCode += block.text;
+          }
+        }
+        return NextResponse.json({ text: visualCode });
+      } else {
+        const client = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
+          timeout: 60 * 1000,
+          maxRetries: 3
+        });
+
+        const visualResponse = await client.chat.completions.create({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: "system", content: VISUAL_GENERATOR_PROMPT },
+            { role: "user", content: visualQuery }
+          ],
+          stream: false
+        });
+
+        const visualCode = visualResponse.choices[0].message.content || "";
+        return NextResponse.json({ text: visualCode });
+      }
+    }
 
     let finalAssistantText = "";
     let toolLogs: any[] = [];
@@ -436,58 +488,11 @@ Format exactly like this:
         timestamp: new Date().toLocaleTimeString()
       });
 
-      let finalText = cleanText;
-
-      // STEP 3: Generates visual layout code if evaluated true
-      if (decision.visual_needed) {
-        console.log(`[Step 3] Launching Claude Visual Generator...`);
-        const userQuery = messages[messages.length - 1].text || messages[messages.length - 1].content || "";
-        const visualQuery = `User Query: ${userQuery}
-
-Manual Page Extracts:
-${retrievedPagesContent.length > 0 ? retrievedPagesContent.join("\n\n") : "No specific manual pages retrieved."}
-
-Technical Text Answer:
-${cleanText}`;
-
-        const visualResponse = await client.messages.create({
-          model: "claude-sonnet-5",
-          max_tokens: 4096,
-          system: VISUAL_GENERATOR_PROMPT,
-          messages: [
-            { role: "user", content: visualQuery }
-          ],
-          stream: false
-        });
-
-        let visualCode = "";
-        for (const block of visualResponse.content) {
-          if (block.type === "text") {
-            visualCode += block.text;
-          }
-        }
-
-        toolLogs.push({
-          id: `visual-generation-${Date.now()}`,
-          type: "llm_turn",
-          toolName: "Step 3: Visual Generator Code Output",
-          arguments: {
-            prompt_sent_to_generator: visualQuery
-          },
-          status: visualCode.trim() ? "completed" : "failed",
-          resultSummary: visualCode.trim() ? `Generated code for: "${decision.proposed_title}"` : "Failed to generate code",
-          rawOutput: visualCode,
-          timestamp: new Date().toLocaleTimeString()
-        });
-
-        if (visualCode.trim()) {
-          finalText = `${cleanText}\n\n${visualCode.trim()}`;
-        }
-      }
-
       return NextResponse.json({
-        text: finalText,
-        toolLogs: toolLogs
+        text: cleanText,
+        toolLogs: toolLogs,
+        decision: decision,
+        retrievedContent: retrievedPagesContent.join("\n\n")
       });
 
     } else {
@@ -623,52 +628,11 @@ ${cleanText}`;
         timestamp: new Date().toLocaleTimeString()
       });
 
-      let finalText = cleanText;
-
-      // STEP 3: Generates visual layout code if evaluated true
-      if (decision.visual_needed) {
-        console.log(`[Step 3] Launching OpenAI Visual Generator...`);
-        const userQuery = messages[messages.length - 1].text || messages[messages.length - 1].content || "";
-        const visualQuery = `User Query: ${userQuery}
-
-Manual Page Extracts:
-${retrievedPagesContent.length > 0 ? retrievedPagesContent.join("\n\n") : "No specific manual pages retrieved."}
-
-Technical Text Answer:
-${cleanText}`;
-
-        const visualResponse = await client.chat.completions.create({
-          model: OPENAI_MODEL,
-          messages: [
-            { role: "system", content: VISUAL_GENERATOR_PROMPT },
-            { role: "user", content: visualQuery }
-          ],
-          stream: false
-        });
-
-        const visualCode = visualResponse.choices[0].message.content || "";
-
-        toolLogs.push({
-          id: `visual-generation-${Date.now()}`,
-          type: "llm_turn",
-          toolName: "Step 3: Visual Generator Code Output",
-          arguments: {
-            prompt_sent_to_generator: visualQuery
-          },
-          status: visualCode.trim() ? "completed" : "failed",
-          resultSummary: visualCode.trim() ? `Generated code for: "${decision.proposed_title}"` : "Failed to generate code",
-          rawOutput: visualCode,
-          timestamp: new Date().toLocaleTimeString()
-        });
-
-        if (visualCode.trim()) {
-          finalText = `${cleanText}\n\n${visualCode.trim()}`;
-        }
-      }
-
       return NextResponse.json({
-        text: finalText,
-        toolLogs: toolLogs
+        text: cleanText,
+        toolLogs: toolLogs,
+        decision: decision,
+        retrievedContent: retrievedPagesContent.join("\n\n")
       });
     }
 
