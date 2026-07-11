@@ -540,7 +540,6 @@ export default function Home() {
           const lastKey = currentKeys[currentKeys.length - 1];
           if (lastKey) {
             setActiveArtifactId(lastKey);
-            setActiveTab("preview");
           }
           return found;
         }
@@ -627,7 +626,6 @@ export default function Home() {
           const { source, pages } = readPagesTool.arguments || {};
           if (source) setSelectedDoc(source);
           if (pages && Array.isArray(pages) && pages.length > 0) setSelectedPage(pages[0]);
-          setActiveTab("manual");
         }
       }
 
@@ -811,20 +809,52 @@ Please analyze this error, fix your code, and output the entire corrected React 
                   )}
 
                   {msg.role === "assistant" ? (
-                    <MarkdownRenderer
-                      content={msg.text
-                        .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, (m) => {
-                          const titleMatch = m.match(/title="([^"]+)"/);
-                          const title = titleMatch ? titleMatch[1] : "Interactive Tool";
-                          return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
-                        })
-                        .replace(/<antArtifact[\s\S]*$/g, (m) => {
-                          const titleMatch = m.match(/title="([^"]+)"/);
-                          const title = titleMatch ? titleMatch[1] : "Interactive Tool";
-                          return `\n\n[🔧 Mounted Artifact: "${title}" — Rendering side panel...]\n\n`;
-                        })
-                      }
-                    />
+                    <div className="flex flex-col w-full">
+                      <MarkdownRenderer
+                        content={msg.text
+                          .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, "")
+                          .replace(/<antArtifact[\s\S]*$/g, "")
+                        }
+                      />
+                      
+                      {/* Interactive Action Buttons */}
+                      <div className="flex flex-wrap gap-2 mt-3 w-full">
+                        {Array.from(msg.text.matchAll(/<antArtifact\s+identifier="([^"]+)"\s+type="([^"]+)"\s+title="([^"]+)"/g)).map((match, i) => (
+                          <button
+                            key={`art-${msg.id}-${i}`}
+                            onClick={() => {
+                              setActiveArtifactId(match[1]);
+                              setActiveTab("preview");
+                            }}
+                            className="flex items-center space-x-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded px-2.5 py-1.5 transition-colors shadow-sm cursor-pointer select-none"
+                          >
+                            <Layers className="h-4 w-4" />
+                            <span className="text-xs font-bold font-mono tracking-wide">Open: {match[3]}</span>
+                          </button>
+                        ))}
+                        
+                        {msg.toolLogs?.filter(t => t.toolName === "read_pages").map((log, i) => {
+                          const { source, pages } = log.arguments || {};
+                          if (source && pages?.length > 0) {
+                            return (
+                              <button
+                                key={`man-${msg.id}-${i}`}
+                                onClick={() => {
+                                  setSelectedDoc(source);
+                                  setSelectedPage(pages[0]);
+                                  setActiveTab("manual");
+                                }}
+                                className="flex items-center space-x-1.5 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded px-2.5 py-1.5 transition-colors shadow-sm cursor-pointer select-none"
+                              >
+                                <BookOpen className="h-4 w-4" />
+                                <span className="text-xs font-bold font-mono tracking-wide">View Manual (Page {pages[0]})</span>
+                              </button>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </div>
                   ) : (
                     msg.text
                   )}
