@@ -58,14 +58,14 @@ interface ExtractedArtifact {
 // ----------------------------------------------------
 function prepareCodeForSandpack(rawCode: string): string {
   if (!rawCode) return "";
-  
+
   let cleanCode = rawCode;
-  
+
   // 1. Ensure React is imported if JSX is used and no React import exists (case insensitive check)
   if (!/import\s+React\b/i.test(cleanCode) && !/import\s+\*\s+as\s+React\b/i.test(cleanCode)) {
     cleanCode = `import React from 'react';\n` + cleanCode;
   }
-  
+
   // 2. Ensure we have a default export if missing (using case-insensitive search)
   const hasExportDefault = /export\s+default/i.test(cleanCode);
   if (!hasExportDefault) {
@@ -79,12 +79,12 @@ function prepareCodeForSandpack(rawCode: string): string {
   return cleanCode.trim();
 }
 
-const SandpackErrorListener = ({ 
-  onError, 
+const SandpackErrorListener = ({
+  onError,
   onSuccess,
   isLoading
-}: { 
-  onError: (error: string) => void; 
+}: {
+  onError: (error: string) => void;
   onSuccess?: () => void;
   isLoading: boolean;
 }) => {
@@ -140,16 +140,16 @@ const SandpackLoadingOverlay = ({ isCompiling }: { isCompiling: boolean }) => {
   );
 };
 
-const SandpackSandbox = ({ 
-  code, 
-  onError, 
-  onSuccess, 
-  isLoading 
-}: { 
-  code: string; 
-  onError: (error: string) => void; 
-  onSuccess: () => void; 
-  isLoading: boolean; 
+const SandpackSandbox = ({
+  code,
+  onError,
+  onSuccess,
+  isLoading
+}: {
+  code: string;
+  onError: (error: string) => void;
+  onSuccess: () => void;
+  isLoading: boolean;
 }) => {
   const [hasCompiledOnce, setHasCompiledOnce] = useState(false);
   const preparedCode = useMemo(() => prepareCodeForSandpack(code), [code]);
@@ -221,10 +221,10 @@ const MermaidSandbox = ({ content, id }: { content: string; id: string }) => {
             lineColor: "#f97316"
           }
         });
-        
+
         const cleanContent = content.trim();
         const renderId = `mermaid-render-${id.replace(/[^a-zA-Z0-9]/g, "-")}`;
-        
+
         return m.default.render(renderId, cleanContent);
       })
       .then(({ svg: renderedSvg }) => {
@@ -439,7 +439,7 @@ export default function Home() {
       }
     };
   }, []);
-  
+
   const [activeTab, setActiveTab] = useState<"chat" | "preview" | "manual">("chat");
   const [previewSubTab, setPreviewSubTab] = useState<"view" | "code">("view");
 
@@ -503,10 +503,10 @@ export default function Home() {
 
   useEffect(() => {
     setIsMounted(true);
-    
+
     const savedDevMode = localStorage.getItem("omni-pro-dev-mode");
     if (savedDevMode !== null) setIsDeveloperMode(savedDevMode === "true");
-    
+
     const savedModel = localStorage.getItem("omni-pro-model");
     if (savedModel === "openai" || savedModel === "claude") setSelectedModel(savedModel as "openai" | "claude");
 
@@ -643,20 +643,20 @@ export default function Home() {
       setSpeakingMessageId(null);
       return;
     }
-    
+
     window.speechSynthesis.cancel();
-    
+
     // Clean text of artifact tags, code blocks, and markdown
     const cleanText = text
       .replace(/```[\s\S]*?```/g, " code snippet ")
       .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, " interactive artifact generated ")
       .replace(/<antArtifact[\s\S]*$/g, " interactive artifact generated ")
       .replace(/[*_#`]/g, " ");
-      
+
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.onend = () => setSpeakingMessageId(null);
     utterance.onerror = () => setSpeakingMessageId(null);
-    
+
     setSpeakingMessageId(messageId);
     window.speechSynthesis.speak(utterance);
   }, [speakingMessageId]);
@@ -745,10 +745,10 @@ export default function Home() {
         prev.map((m) =>
           m.id === assistantMsgId
             ? {
-                ...m,
-                isError: true,
-                text: errorMsg
-              }
+              ...m,
+              isError: true,
+              text: errorMsg
+            }
             : m
         )
       );
@@ -796,18 +796,18 @@ Please analyze this error, fix your code, and output the entire corrected React 
       setIsListening(false);
       return;
     }
-    
+
     try {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SpeechRecognition) {
         alert("Speech Recognition is not supported in this browser. Try using Chrome or Edge.");
         return;
       }
-      
+
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      
+
       recognition.onstart = () => setIsListening(true);
       recognition.onresult = (event: any) => {
         let finalTranscript = "";
@@ -825,7 +825,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
         setIsListening(false);
       };
       recognition.onend = () => setIsListening(false);
-      
+
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
@@ -848,7 +848,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                 <span>•</span>
                 <span>{msg.timestamp}</span>
                 {msg.role === "assistant" && !msg.isError && (
-                  <button 
+                  <button
                     onClick={() => toggleSpeak(msg.text, msg.id)}
                     className="ml-2 flex items-center justify-center p-1 rounded hover:bg-white/10 text-gray-400 hover:text-primary transition-colors cursor-pointer"
                     title={speakingMessageId === msg.id ? "Stop speaking" : "Read aloud"}
@@ -861,7 +861,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                   </button>
                 )}
               </div>
-              
+
               {msg.role === "system" ? (
                 <div className="w-full rounded border border-success/20 bg-success/5 p-3 font-mono text-xs text-success/90">
                   {msg.text}
@@ -873,11 +873,10 @@ Please analyze this error, fix your code, and output the entire corrected React 
                 </div>
               ) : (
                 <div
-                  className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${
-                    msg.role === "user"
+                  className={`max-w-[90%] rounded p-3 text-sm font-sans leading-relaxed ${msg.role === "user"
                       ? "bg-accent/10 border border-accent/20 text-foreground whitespace-pre-wrap text-xs"
                       : "bg-surface border border-border text-gray-100 w-full"
-                  }`}
+                    }`}
                 >
                   {/* Render tool logs first if role is assistant */}
                   {msg.role === "assistant" && msg.toolLogs && msg.toolLogs.length > 0 && isDeveloperMode && (
@@ -998,7 +997,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                           }
                         />
                       )}
-                      
+
                       {/* Interactive Action Buttons */}
                       <div className="flex flex-wrap gap-2 mt-3 w-full">
                         {Array.from(msg.text.matchAll(/<antArtifact\s+identifier="([^"]+)"\s+type="([^"]+)"\s+title="([^"]+)"/g)).map((match, i) => (
@@ -1014,7 +1013,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                             <span className="text-xs font-bold font-mono tracking-wide">Open: {match[3]}</span>
                           </button>
                         ))}
-                        
+
                         {/* Fallback React Code Blocks */}
                         {(() => {
                           const mdCodeBlockRegex = /```(jsx|tsx|javascript|typescript)\s*([\s\S]*?)```/g;
@@ -1037,7 +1036,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                                   title = funcMatch[1].replace(/([A-Z])/g, " $1").trim();
                                 }
                               }
-                              
+
                               buttons.push(
                                 <button
                                   key={`fallback-btn-${msg.id}-${count}`}
@@ -1059,7 +1058,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                           }
                           return buttons;
                         })()}
-                        
+
                         {msg.toolLogs?.filter(t => t.toolName === "read_pages").map((log, i) => {
                           const { source, pages } = log.arguments || {};
                           if (source && pages?.length > 0) {
@@ -1123,11 +1122,10 @@ Please analyze this error, fix your code, and output the entire corrected React 
             />
             <button
               onClick={toggleListening}
-              className={`rounded p-2 transition-colors flex-shrink-0 ${
-                isListening 
-                  ? "bg-error text-background animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" 
+              className={`rounded p-2 transition-colors flex-shrink-0 ${isListening
+                  ? "bg-error text-background animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                   : "bg-black/40 text-gray-400 hover:text-primary hover:bg-black/60 border border-border"
-              }`}
+                }`}
               title={isListening ? "Stop listening" : "Speech to Text"}
             >
               {isListening ? <LucideIcons.MicOff className="h-4 w-4" /> : <LucideIcons.Mic className="h-4 w-4" />}
@@ -1185,7 +1183,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
               {isLoading ? "Analyzing..." : "Ready"}
             </span>
           </div>
-          <button 
+          <button
             onClick={() => setShowSettings(!showSettings)}
             className={`text-gray-400 hover:text-primary transition-colors focus:outline-none ${showSettings ? "text-primary" : ""}`}
           >
@@ -1194,9 +1192,9 @@ Please analyze this error, fix your code, and output the entire corrected React 
 
           {/* Backdrop to close dropdown on click outside */}
           {showSettings && (
-            <div 
-              className="fixed inset-0 z-40 bg-transparent cursor-default" 
-              onClick={() => setShowSettings(false)} 
+            <div
+              className="fixed inset-0 z-40 bg-transparent cursor-default"
+              onClick={() => setShowSettings(false)}
             />
           )}
 
@@ -1281,33 +1279,30 @@ Please analyze this error, fix your code, and output the entire corrected React 
           <div className="flex space-x-1">
             <button
               onClick={() => setActiveTab("chat")}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                activeTab === "chat"
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${activeTab === "chat"
                   ? "bg-primary text-background border-primary font-bold shadow-md"
                   : "border-transparent text-gray-400 hover:text-gray-200"
-              }`}
+                }`}
             >
               <Send className="h-3.5 w-3.5" />
               <span>CHAT</span>
             </button>
             <button
               onClick={() => setActiveTab("preview")}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                activeTab === "preview"
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${activeTab === "preview"
                   ? "bg-primary text-background border-primary font-bold shadow-md"
                   : "border-transparent text-gray-400 hover:text-gray-200"
-              }`}
+                }`}
             >
               <Layers className="h-3.5 w-3.5" />
               <span>ARTIFACT</span>
             </button>
             <button
               onClick={() => setActiveTab("manual")}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${
-                activeTab === "manual"
+              className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono tracking-wider border rounded transition-all ${activeTab === "manual"
                   ? "bg-primary text-background border-primary font-bold shadow-md"
                   : "border-transparent text-gray-400 hover:text-gray-200"
-              }`}
+                }`}
             >
               <BookOpen className="h-3.5 w-3.5" />
               <span>MANUAL EXPLORER</span>
@@ -1317,7 +1312,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
 
         {/* Tab Body Viewports */}
         <div className="flex-1 flex flex-row overflow-hidden relative">
-          
+
           {/* Left/Center Pane: Main view switcher */}
           <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* 1. CHAT TAB */}
@@ -1335,20 +1330,20 @@ Please analyze this error, fix your code, and output the entire corrected React 
                     <>
                       <div className="flex h-10 items-center justify-between border-b border-border bg-surface px-4 font-mono text-xs">
                         <span className="text-gray-300 font-bold uppercase">{activeArtifact.title}</span>
-                        
+
                         <div className="flex items-center space-x-2">
                           <span className="text-[10px] text-gray-600 bg-black/35 px-2 py-0.5 rounded border border-border">
                             {activeArtifact.type}
                           </span>
-                           <button
-                             onClick={handleRefreshSandbox}
-                             className="flex items-center space-x-1.5 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
-                             title="Refresh Component"
-                           >
-                             <LucideIcons.RefreshCw className="h-3.5 w-3.5" />
-                             <span className="text-[9px]">Refresh</span>
-                           </button>
-                          
+                          <button
+                            onClick={handleRefreshSandbox}
+                            className="flex items-center space-x-1.5 px-2.5 py-1 text-[10px] bg-black/30 border border-border hover:border-primary/30 rounded text-gray-400 hover:text-primary transition-all font-mono"
+                            title="Refresh Component"
+                          >
+                            <LucideIcons.RefreshCw className="h-3.5 w-3.5" />
+                            <span className="text-[9px]">Refresh</span>
+                          </button>
+
                           <div className="flex rounded border border-border overflow-hidden">
                             <button
                               onClick={() => setPreviewSubTab("view")}
@@ -1365,8 +1360,25 @@ Please analyze this error, fix your code, and output the entire corrected React 
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 overflow-auto p-4 bg-black/20">
+                        {/* Notice Banner */}
+                        <div className="mb-4 flex items-center justify-between space-x-3 rounded border border-accent bg-accent/90 px-4 py-2.5 text-xs font-sans text-white shadow-[0_4px_12px_rgba(249,115,22,0.15)] select-none">
+                          <div className="flex items-center space-x-2.5">
+                            <AlertTriangle className="h-4.5 w-4.5 text-white shrink-0" />
+                            <span className="font-semibold tracking-wide">
+                              Not seeing anything? please refresh the artifact.
+                            </span>
+                          </div>
+                          <button
+                            onClick={handleRefreshSandbox}
+                            className="flex items-center space-x-1.5 px-2.5 py-1 text-[10px] bg-white text-accent hover:bg-white/95 rounded font-mono font-bold transition-all shadow-sm shrink-0 cursor-pointer"
+                          >
+                            <LucideIcons.RefreshCw className="h-3 w-3 animate-spin-hover" />
+                            <span>Refresh</span>
+                          </button>
+                        </div>
+
                         {previewSubTab === "code" ? (
                           <div className="relative w-full h-full flex-1">
                             <button
@@ -1439,33 +1451,33 @@ Please analyze this error, fix your code, and output the entire corrected React 
                                 <div className="space-y-4">
                                   {/* Dispatcher by type */}
                                   {(activeArtifact.type.toLowerCase().includes("react") || activeArtifact.type.toLowerCase().includes("component") || activeArtifact.type.toLowerCase() === "jsx" || activeArtifact.type.toLowerCase() === "tsx") && (
-                                    <SandpackSandbox 
+                                    <SandpackSandbox
                                       key={activeArtifact.id}
-                                      code={activeArtifact.content} 
-                                      onError={handleAutoRetry} 
-                                      onSuccess={handleSandboxSuccess} 
-                                      isLoading={isLoading} 
+                                      code={activeArtifact.content}
+                                      onError={handleAutoRetry}
+                                      onSuccess={handleSandboxSuccess}
+                                      isLoading={isLoading}
                                     />
                                   )}
-                                  
+
                                   {activeArtifact.type.toLowerCase().includes("mermaid") && (
                                     <MermaidSandbox content={activeArtifact.content} id={activeArtifact.id} />
                                   )}
-                                  
+
                                   {activeArtifact.type.toLowerCase().includes("svg") && (
                                     <SvgSandbox content={activeArtifact.content} />
                                   )}
-                                  
+
                                   {activeArtifact.type.toLowerCase().includes("html") && (
                                     <HtmlSandbox content={activeArtifact.content} />
                                   )}
-                                  
+
                                   {activeArtifact.type.toLowerCase().includes("markdown") && (
                                     <div className="prose prose-invert max-w-none text-sm text-gray-300 font-sans p-4 bg-surface rounded border border-border">
                                       {activeArtifact.content}
                                     </div>
                                   )}
-                                  
+
                                   {(activeArtifact.type.toLowerCase().includes("code") || activeArtifact.type.toLowerCase().includes("json") || activeArtifact.type.toLowerCase().includes("text")) && (
                                     <pre className="whitespace-pre-wrap font-mono leading-relaxed text-xs text-gray-300 bg-surface p-3 rounded border border-border">
                                       <code>{activeArtifact.content}</code>
@@ -1557,7 +1569,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
                   <span>ASSISTANT CHAT</span>
                 </div>
               </div>
-              
+
               <div className="flex-1 overflow-hidden px-4 flex flex-col bg-black/20 animate-fade-in">
                 {renderChatContent(true /* isSidebar mode */)}
               </div>
