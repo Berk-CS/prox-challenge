@@ -86,5 +86,8 @@ The entire application is consolidated into a single-repo Next.js architecture, 
 * **Voice-Assistant** - support for both typing by voice and listening to AI text output
 * **Developer-Mode** - A built-in dev mode exposes the agent's internal thought process and tool execution loops. Users can click on tool logs to instantly see how the LLM routed queries, retrieved pages, and formatted parameters under the hood.
 * **Side-by-Side-Workspace** - Simple and intutitive access to the chatbot, manual and artifact. 
+
+* **Memory** - persistant chat history to prevent accidentally reloading and losing conversation history. 
+
 * **Industrial-Theming** - Designed with a premium, high-contrast dark mode tailored for shop environments. The typography, amber accents, and visual states feel native to an industrial welding interface.
 

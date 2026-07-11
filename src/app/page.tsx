@@ -17,6 +17,7 @@ import {
   Code,
   Eye,
   RefreshCw,
+  Trash2,
   Image as ImageIcon
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -512,6 +513,15 @@ export default function Home() {
 
     const savedReadAloud = localStorage.getItem("omni-pro-read-aloud");
     if (savedReadAloud !== null) setIsReadAloud(savedReadAloud === "true");
+
+    const savedMessages = localStorage.getItem("omni-pro-chat-messages");
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (e) {
+        console.error("Error loading persisted messages:", e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -519,8 +529,9 @@ export default function Home() {
       localStorage.setItem("omni-pro-dev-mode", isDeveloperMode.toString());
       localStorage.setItem("omni-pro-model", selectedModel);
       localStorage.setItem("omni-pro-read-aloud", isReadAloud.toString());
+      localStorage.setItem("omni-pro-chat-messages", JSON.stringify(messages));
     }
-  }, [isDeveloperMode, selectedModel, isReadAloud, isMounted]);
+  }, [isDeveloperMode, selectedModel, isReadAloud, messages, isMounted]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -767,6 +778,25 @@ export default function Home() {
     setTimeout(() => {
       setPreviewSubTab("view");
     }, 50);
+  }, []);
+
+  const handleClearChat = useCallback(() => {
+    if (confirm("Are you sure you want to clear the chat history?")) {
+      const defaultMsg = [
+        {
+          id: "system-1",
+          role: "system",
+          text: "Welcome to the Vulcan OmniPro 220 Assistant! I've loaded the owner's manual and am ready to help you with any setup, troubleshooting, or calibration questions you might have.",
+          timestamp: new Date().toLocaleTimeString()
+        }
+      ];
+      setMessages(defaultMsg);
+      localStorage.setItem("omni-pro-chat-messages", JSON.stringify(defaultMsg));
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeakingMessageId(null);
+    }
   }, []);
 
   const handleAutoRetry = useCallback((errorMsg: string) => {
@@ -1183,6 +1213,13 @@ Please analyze this error, fix your code, and output the entire corrected React 
               {isLoading ? "Analyzing..." : "Ready"}
             </span>
           </div>
+          <button
+            onClick={handleClearChat}
+            className="text-gray-400 hover:text-error transition-colors focus:outline-none cursor-pointer"
+            title="Clear Chat History"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={`text-gray-400 hover:text-primary transition-colors focus:outline-none ${showSettings ? "text-primary" : ""}`}
