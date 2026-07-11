@@ -447,8 +447,9 @@ export default function Home() {
   const [sandboxError, setSandboxError] = useState<string | null>(null);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(true);
-  const [selectedModel, setSelectedModel] = useState<"openai" | "claude">("openai");
+  const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(false);
+  const [selectedModel, setSelectedModel] = useState<"openai" | "claude">("claude");
+  const [isReadAloud, setIsReadAloud] = useState<boolean>(false);
 
   const [localCode, setLocalCode] = useState<string>(" ");
   const [copied, setCopied] = useState<boolean>(false);
@@ -498,14 +499,18 @@ export default function Home() {
     
     const savedModel = localStorage.getItem("omni-pro-model");
     if (savedModel === "openai" || savedModel === "claude") setSelectedModel(savedModel as "openai" | "claude");
+
+    const savedReadAloud = localStorage.getItem("omni-pro-read-aloud");
+    if (savedReadAloud !== null) setIsReadAloud(savedReadAloud === "true");
   }, []);
 
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem("omni-pro-dev-mode", isDeveloperMode.toString());
       localStorage.setItem("omni-pro-model", selectedModel);
+      localStorage.setItem("omni-pro-read-aloud", isReadAloud.toString());
     }
-  }, [isDeveloperMode, selectedModel, isMounted]);
+  }, [isDeveloperMode, selectedModel, isReadAloud, isMounted]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -621,6 +626,31 @@ export default function Home() {
     }));
   }, [activeArtifactId]);
 
+  // --- TEXT TO SPEECH (TTS) ---
+  const toggleSpeak = useCallback((text: string, messageId: string) => {
+    if (speakingMessageId === messageId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+    
+    window.speechSynthesis.cancel();
+    
+    // Clean text of artifact tags, code blocks, and markdown
+    const cleanText = text
+      .replace(/```[\s\S]*?```/g, " code snippet ")
+      .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, " interactive artifact generated ")
+      .replace(/<antArtifact[\s\S]*$/g, " interactive artifact generated ")
+      .replace(/[*_#`]/g, " ");
+      
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.onend = () => setSpeakingMessageId(null);
+    utterance.onerror = () => setSpeakingMessageId(null);
+    
+    setSpeakingMessageId(messageId);
+    window.speechSynthesis.speak(utterance);
+  }, [speakingMessageId]);
+
   const handleSend = useCallback(async (customText?: string) => {
     const textToSend = customText || input;
     if (!textToSend.trim() || isLoading) return;
@@ -693,6 +723,9 @@ export default function Home() {
 
       if (data.text) {
         parseArtifacts(data.text);
+        if (isReadAloud) {
+          toggleSpeak(data.text, assistantMsgId);
+        }
       }
 
     } catch (err: unknown) {
@@ -712,7 +745,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, selectedModel, parseArtifacts]);
+  }, [input, isLoading, messages, selectedModel, parseArtifacts, isReadAloud, toggleSpeak]);
 
   const handleSandboxSuccess = useCallback(() => {
     setSandboxError(null);
@@ -791,30 +824,7 @@ Please analyze this error, fix your code, and output the entire corrected React 
     }
   }, [isListening]);
 
-  // --- TEXT TO SPEECH (TTS) ---
-  const toggleSpeak = useCallback((text: string, messageId: string) => {
-    if (speakingMessageId === messageId) {
-      window.speechSynthesis.cancel();
-      setSpeakingMessageId(null);
-      return;
-    }
-    
-    window.speechSynthesis.cancel();
-    
-    // Clean text of artifact tags, code blocks, and markdown
-    const cleanText = text
-      .replace(/```[\s\S]*?```/g, " code snippet ")
-      .replace(/<antArtifact[\s\S]*?<\/antArtifact>/g, " interactive artifact generated ")
-      .replace(/<antArtifact[\s\S]*$/g, " interactive artifact generated ")
-      .replace(/[*_#`]/g, " ");
-      
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.onend = () => setSpeakingMessageId(null);
-    utterance.onerror = () => setSpeakingMessageId(null);
-    
-    setSpeakingMessageId(messageId);
-    window.speechSynthesis.speak(utterance);
-  }, [speakingMessageId]);
+
 
   const renderChatContent = (isSidebar = false) => {
     return (
@@ -1227,6 +1237,21 @@ Please analyze this error, fix your code, and output the entire corrected React 
                     checked={selectedModel === "claude"}
                     onChange={() => setSelectedModel("claude")}
                     className="accent-primary"
+                  />
+                </label>
+              </div>
+
+              <div className="border-b border-border pb-1.5 mb-2 mt-4 font-bold text-[10px] uppercase text-primary tracking-wider">
+                Voice Assistant
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center justify-between cursor-pointer py-1 hover:bg-black/20 px-1 rounded transition-colors select-none">
+                  <span>Auto Read Aloud</span>
+                  <input
+                    type="checkbox"
+                    checked={isReadAloud}
+                    onChange={(e) => setIsReadAloud(e.target.checked)}
+                    className="accent-primary h-3.5 w-3.5"
                   />
                 </label>
               </div>
