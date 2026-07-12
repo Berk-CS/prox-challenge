@@ -1,0 +1,865 @@
+{
+  "sections": [
+    {
+      "title": "CONTINUATION",
+      "pages": [
+        1
+      ],
+      "visuals": [
+        {
+          "page": 1,
+          "description": "Cover page featuring the VULCAN OMNIPRO 220 Multiprocess Welding System. The image shows the welding machine with its controls and branding prominently displayed. This visual serves as an introduction to the product and its branding."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Table of Contents",
+      "pages": [
+        2
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "IMPORTANT SAFETY INFORMATION",
+      "pages": [
+        2
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Fume and Gas Safety",
+      "pages": [
+        3
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Arc Ray Safety",
+      "pages": [
+        3
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Electrical Safety",
+      "pages": [
+        4
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Fire Safety",
+      "pages": [
+        4
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Welder Use and Care",
+      "pages": [
+        5
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Maintenance",
+      "pages": [
+        5
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Gas Shielded Welding - Cylinder Safety",
+      "pages": [
+        5
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Grounding",
+      "pages": [
+        6
+      ],
+      "visuals": [
+        {
+          "page": 6,
+          "description": "A warning box highlighting the dangers of incorrect grounding wire connection. It includes a list of precautions to prevent electric shock and death."
+        },
+        {
+          "page": 6,
+          "description": "A table labeled 'Symbology' with icons and their meanings, such as Wire Feed (Speed), Workpiece Ground Cable, and various electrical symbols like VAC, A, OCV, and KVA."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Specifications",
+      "pages": [
+        7
+      ],
+      "visuals": [
+        {
+          "page": 7,
+          "description": "A detailed table listing specifications for MIG, TIG, and Stick welding processes. It includes power input, current input at output, welding current range, rated duty cycles, maximum OCV, weldable materials, welding wire capacity, wire speed, and wire spool capacity."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Controls",
+      "pages": [
+        8,
+        9
+      ],
+      "visuals": [
+        {
+          "page": 8,
+          "description": "A labeled diagram of the front panel controls of the welder. It includes components such as the Home Button, Control Knob, LCD Display, Power Switch, and various sockets and outlets."
+        },
+        {
+          "page": 9,
+          "description": "A labeled diagram of the interior controls of the welder. It shows components like the Wire Spool, Spool Knob, Wire Feed Mechanism, Cold Wire Feed Switch, and various sockets and knobs."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "MIG/Flux-Cored Wire Welding",
+      "pages": [
+        10
+      ],
+      "visuals": [
+        {
+          "page": 10,
+          "description": "A warning box emphasizing the importance of reading the safety information before setup or use. It includes a note about removing protective foam and cardboard before setup."
+        },
+        {
+          "page": 10,
+          "description": "A diagram illustrating the Wire Spool Installation/Wire Setup process. It shows the Power Switch, Door Latch, and a detailed view of the 1-2 lb Spool Loading with components like the Wingnut, Spacer, Spool Spindle, and Spool Brake Pad."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "10-12 Pound Wire Spool Installation",
+      "pages": [
+        11
+      ],
+      "visuals": [
+        {
+          "page": 11,
+          "description": "Diagram showing the assembly of the 10-12 lb Wire Spool. It includes labels for the Spool Knob, Wingnut, Spacer, 10-12 lb Wire Spool, Spool Spindle, Spool Brake Pad, and Welder Wall. Another diagram illustrates the Feed Tensioner and Idler Arm with arrows indicating the direction of movement."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Feed Roller Instructions",
+      "pages": [
+        12
+      ],
+      "visuals": [
+        {
+          "page": 12,
+          "description": "Diagram showing the Feed Roller Knob and Feed Roller. It includes detailed labels for Solid Core V-Groove and Flux-Cored Knurled Groove with specific measurements for each groove type."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Feed Mechanism Setup",
+      "pages": [
+        13
+      ],
+      "visuals": [
+        {
+          "page": 13,
+          "description": "Illustration of the Wire Feed Mechanism with labels for the Gun Cable Connector, Knob, and Wire Feed Control Cable. It shows both incorrect and correct connector insertions. Another diagram shows the DCEN Flux-Cored (Gasless) Polarity Setup with labels for the Wire Feed Power Cable in Negative Socket and Ground Clamp Cable in Positive Socket."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "DCEP Direct Current Electrode Positive Wire Setup",
+      "pages": [
+        14
+      ],
+      "visuals": [
+        {
+          "page": 14,
+          "description": "Diagram illustrating the DCEP Solid Core (Gas Shielded) Polarity Setup. It includes labels for the Ground Clamp Cable in Negative Socket and Wire Feed Power Cable in Positive Socket. Additional visuals show the setup of a gas cylinder with steps for attaching the Regulator and Gas Hose."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Welding Wire Tension and Setup",
+      "pages": [
+        15
+      ],
+      "visuals": [
+        {
+          "page": 15,
+          "description": "Diagram showing the process of holding the Welding Wire securely and guiding it into the Wire Inlet Liner and Feed Guide. It includes visuals of the Idler Arm and Feed Tensioner with instructions on tension settings. Another diagram shows the MIG Gun with labels for the Nozzle and Contact Tip."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "CONTINUATION",
+      "pages": [
+        16
+      ],
+      "visuals": [
+        {
+          "page": 16,
+          "description": "Diagram showing the power input and power switch locations on the welding machine. It includes labels for 'Power Input' and 'Power Switch'. Another diagram illustrates the 'Cold Wire Feed Switch' and 'MIG Gun' with a label indicating '2 inches' of welding wire."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Optional Spool Gun Setup",
+      "pages": [
+        17
+      ],
+      "visuals": [
+        {
+          "page": 17,
+          "description": "Diagram illustrating the setup of an optional spool gun. It shows the 'Spool Gun Cable Connector', 'Wire Feed Control Cable', 'Gas Hose', and connections to the 'Ground Clamp Cable' and 'Wire Feed Power Cable'."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Basic Wire Welding",
+      "pages": [
+        18
+      ],
+      "visuals": [
+        {
+          "page": 18,
+          "description": "Safety icons indicating protective gear requirements, such as face shield, gloves, and respirator. A warning section emphasizes the importance of practicing welding techniques on scrap pieces."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Duty Cycle (Duration of Use)",
+      "pages": [
+        19
+      ],
+      "visuals": [
+        {
+          "page": 19,
+          "description": "Charts showing 'Rated Duty Cycle' for 120VAC and 240VAC, illustrating the welding and resting times. Another diagram shows the setup for welding, including 'Ground Clamp' and 'Workpiece' with labels for 'Clean surface to bare metal'."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Settings",
+      "pages": [
+        20
+      ],
+      "visuals": [
+        {
+          "page": 20,
+          "description": "Control panel diagram with 'Left Knob', 'Main Control Knob', and 'Right Knob'. Screens display settings for 'MIG Stainless Steel', wire diameter, material thickness, and auto weld settings with voltage and wire feed speed."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "CONTINUATION",
+      "pages": [
+        21
+      ],
+      "visuals": [
+        {
+          "page": 21,
+          "description": "Visuals of control settings including 'Run-In WFS', 'Inductance', 'Spot Timer', 'Recall Setting', and 'Save Setting'. Each visual shows a digital display with icons representing the respective settings. Additionally, there is a safety warning graphic depicting a person with a gas mask, indicating the danger of asphyxiation."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Basic Wire Welding Technique",
+      "pages": [
+        22
+      ],
+      "visuals": [
+        {
+          "page": 22,
+          "description": "Diagrams illustrating 'stringer bead' and 'weave bead' techniques. Additional diagrams show 'Weld MIG Gun angles' for fillet and butt weld joints, and 'Push Angle' and 'Drag Angle' for solid wire with shielding gas and flux-cored wire without gas, respectively. The 'CTWD' diagram shows the Contact Tip to Work Distance."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Welding Procedures and Safety",
+      "pages": [
+        23
+      ],
+      "visuals": [
+        {
+          "page": 23,
+          "description": "Diagram of a welding machine with labeled parts including 'LCD Display', 'Warning Screen', and 'Power Switch'. A flowchart for 'FOLLOW DUTY CYCLE' with time guidelines for different voltages. Illustration of a 'MIG Gun' and its placement on a concrete slab."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "TIG/Stick Welding",
+      "pages": [
+        24
+      ],
+      "visuals": [
+        {
+          "page": 24,
+          "description": "Diagram showing 'TIG Setup' with labeled components such as 'Foot Pedal', 'Foot Pedal Cable', 'TIG Torch', 'Ground Clamp', and their connections to the welder."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Connect Shielding Gas and Power Cord",
+      "pages": [
+        25
+      ],
+      "visuals": [
+        {
+          "page": 25,
+          "description": "Illustrations showing the steps to connect a shielding gas cylinder, including securing the cylinder, removing the cap, and connecting the regulator and hose. Another diagram shows the 'Connect Power Cord' section with a labeled 'Power Input' on the welder."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Sharpen Tungsten Electrode",
+      "pages": [
+        26
+      ],
+      "visuals": [
+        {
+          "page": 26,
+          "description": "Diagram showing the correct method to sharpen a tungsten electrode using a grinding wheel. The electrode is shown at an angle against the wheel, with labels indicating the grinding direction and the formation of a blunt point."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Assemble TIG Torch",
+      "pages": [
+        26
+      ],
+      "visuals": [
+        {
+          "page": 26,
+          "description": "Exploded view diagram of a TIG torch assembly. Components such as the back cap, collet, collet body, and ceramic nozzle are labeled, showing the order of assembly and where to insert the tungsten electrode."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Setup",
+      "pages": [
+        27
+      ],
+      "visuals": [
+        {
+          "page": 27,
+          "description": "Illustration of a welding machine with cables connected. Labels indicate the ground clamp cable in the negative socket and the electrode holder cable in the positive socket."
+        },
+        {
+          "page": 27,
+          "description": "Diagram showing the power input section of the welding machine, with a note about the correct orientation of the power plug."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Basic TIG/Stick Welding",
+      "pages": [
+        28
+      ],
+      "visuals": [
+        {
+          "page": 28,
+          "description": "Safety icons indicating the need for protective gear such as a full face shield, gloves, and respirator. Additional warning icons about fire and burns."
+        },
+        {
+          "page": 28,
+          "description": "Diagram of a welding machine with a power on indicator and a welding torch, emphasizing the importance of keeping the welding tip clear of grounded objects."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Duty Cycle (Duration of Use)",
+      "pages": [
+        29
+      ],
+      "visuals": [
+        {
+          "page": 29,
+          "description": "Table showing TIG and Stick rated duty cycles for different voltages and amperages, with corresponding welding and resting times."
+        },
+        {
+          "page": 29,
+          "description": "Diagram illustrating the setup of a weld, including clamps and clean surfaces to bare metal, with a note on chamfering thick workpieces."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "TIG Welding",
+      "pages": [
+        30
+      ],
+      "visuals": [
+        {
+          "page": 30,
+          "description": "Control panel display of a welding machine showing settings for gas type, rod diameter, and material thickness. Includes labels for the left knob, main control knob, and right knob."
+        },
+        {
+          "page": 30,
+          "description": "Diagram showing the process settings for TIG welding, including polarity and gas settings, rod diameter, and material thickness."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "CONTINUATION",
+      "pages": [
+        31
+      ],
+      "visuals": [
+        {
+          "page": 31,
+          "description": "Diagrams for 'Recall Setting' and 'Save Setting' buttons, illustrating the interface for saving and recalling welding configurations."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Welding",
+      "pages": [
+        32,
+        33
+      ],
+      "visuals": [
+        {
+          "page": 32,
+          "description": "Diagram showing the control panel with labeled knobs: Left Knob, Main Control Knob, and Right Knob, used for setting electrode type and material thickness."
+        },
+        {
+          "page": 32,
+          "description": "Diagram illustrating the 'No Gas Required' setup for polarity setting, showing cable connections."
+        },
+        {
+          "page": 32,
+          "description": "Display screen showing settings for Stick process, including electrode type, diameter, material thickness, and amperage."
+        },
+        {
+          "page": 33,
+          "description": "Diagrams for 'Hot Start', 'Arc Force', 'Recall Setting', and 'Save Setting', illustrating optional settings for adjusting weld parameters."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Welding Tips",
+      "pages": [
+        34
+      ],
+      "visuals": [
+        {
+          "page": 34,
+          "description": "Diagram for 'Strike Test' showing a test setup with a dead-blow hammer and scrap workpiece, illustrating good and poor weld outcomes."
+        },
+        {
+          "page": 34,
+          "description": "Diagram of a 'Chipping Hammer' and 'Wire Brush', tools used for cleaning the weld."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld Diagnosis",
+      "pages": [
+        35
+      ],
+      "visuals": [
+        {
+          "page": 35,
+          "description": "Diagram showing 'Wire Weld Diagnosis' with illustrations of inadequate, proper, and excess penetration, and methods to adjust workpiece heat."
+        },
+        {
+          "page": 35,
+          "description": "Example Wire Weld Diagrams illustrating different weld conditions such as 'Good Weld', 'Voltage Too Low', 'Travel Speed Too Fast', and corrective actions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld Penetration (Workpiece Heat Control)",
+      "pages": [
+        36
+      ],
+      "visuals": [
+        {
+          "page": 36,
+          "description": "Diagrams showing different types of weld penetration: Excess Penetration or Burn-Through, Proper Penetration, and Inadequate Penetration. Each diagram includes profile views of the welds with labels indicating the type of penetration."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Bend at Joint",
+      "pages": [
+        36
+      ],
+      "visuals": [
+        {
+          "page": 36,
+          "description": "Profile view diagram illustrating a bend at the joint with possible causes and solutions listed."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Coat of Slag Over Weld",
+      "pages": [
+        36
+      ],
+      "visuals": [
+        {
+          "page": 36,
+          "description": "Top view diagram showing a weld partially chipped away to reveal the weld beneath the slag."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Weld Not Adhering Properly",
+      "pages": [
+        36
+      ],
+      "visuals": [
+        {
+          "page": 36,
+          "description": "Profile view diagram showing gaps between weld and previous bead or workpiece, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld\u2013Porosity",
+      "pages": [
+        37
+      ],
+      "visuals": [
+        {
+          "page": 37,
+          "description": "Top view diagram showing small cavities or holes in the bead, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld\u2013Excessive Spatter",
+      "pages": [
+        37
+      ],
+      "visuals": [
+        {
+          "page": 37,
+          "description": "Top view diagram showing spatter around the weld, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld\u2013Crooked/Wavy Bead",
+      "pages": [
+        37
+      ],
+      "visuals": [
+        {
+          "page": 37,
+          "description": "Top view diagram showing a crooked or wavy bead, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wire Weld\u2013Burn-Through",
+      "pages": [
+        37
+      ],
+      "visuals": [
+        {
+          "page": 37,
+          "description": "Top view diagram showing a burn-through where the base material melts away, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld Diagnosis\u2013Workpiece Heat Control / Weld Penetration",
+      "pages": [
+        38
+      ],
+      "visuals": [
+        {
+          "page": 38,
+          "description": "Diagrams showing inadequate, proper, and excess penetration with labels indicating heat levels and corrective actions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Example Stick Weld Diagrams",
+      "pages": [
+        38
+      ],
+      "visuals": [
+        {
+          "page": 38,
+          "description": "Series of diagrams showing different weld conditions such as good weld, current too low/high, weld speed too fast/slow, and arc length issues, with corrective actions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld Penetration (Workpiece Heat Control)",
+      "pages": [
+        39
+      ],
+      "visuals": [
+        {
+          "page": 39,
+          "description": "Diagrams showing different types of stick weld penetration with profile views and possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Weld Not Adhering Properly",
+      "pages": [
+        39
+      ],
+      "visuals": [
+        {
+          "page": 39,
+          "description": "Profile view diagram showing gaps between weld and previous bead or workpiece, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Bend at Joint",
+      "pages": [
+        39
+      ],
+      "visuals": [
+        {
+          "page": 39,
+          "description": "Profile view diagram illustrating a bend at the joint with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Coat of Slag Over Weld",
+      "pages": [
+        40
+      ],
+      "visuals": [
+        {
+          "page": 40,
+          "description": "Top view diagram showing a weld partially chipped away to reveal the weld beneath the slag."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Porosity",
+      "pages": [
+        40
+      ],
+      "visuals": [
+        {
+          "page": 40,
+          "description": "Top view diagram showing small cavities or holes in the bead, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Crooked/Wavy Bead",
+      "pages": [
+        40
+      ],
+      "visuals": [
+        {
+          "page": 40,
+          "description": "Top view diagram showing a crooked or wavy bead, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Excessive Spatter",
+      "pages": [
+        40
+      ],
+      "visuals": [
+        {
+          "page": 40,
+          "description": "Top view diagram showing spatter around the weld, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Stick Weld\u2013Burn-Through",
+      "pages": [
+        40
+      ],
+      "visuals": [
+        {
+          "page": 40,
+          "description": "Top view diagram showing a burn-through where the base material melts away, with possible causes and solutions."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Maintenance",
+      "pages": [
+        41
+      ],
+      "visuals": [
+        {
+          "page": 41,
+          "description": "Diagram showing the MIG Gun Nozzle and Contact Tip. The diagram labels the 'Nozzle' and 'Contact Tip' parts, illustrating their positions and how they fit together."
+        },
+        {
+          "page": 41,
+          "description": "Diagram illustrating the process of replacing the LCD Screen Cover. It shows the 'Display', 'Screen Cover', and 'Screen Frame', with arrows indicating the insertion and placement of the screen cover."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Troubleshooting\u2014MIG/Flux-Cored Welding",
+      "pages": [
+        42,
+        43
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Troubleshooting\u2014TIG/Stick Welding",
+      "pages": [
+        44
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Wiring Schematic",
+      "pages": [
+        45
+      ],
+      "visuals": [
+        {
+          "page": 45,
+          "description": "Detailed wiring schematic showing the electrical connections and components of the welder. Includes labels such as 'OUT+', 'OUT-', 'LCD SCREEN', 'MCU BOARD', and various circuit elements like transformers, diodes, and switches. The schematic provides a comprehensive overview of the internal wiring and electronic layout."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Parts List and Diagram",
+      "pages": [
+        46
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Assembly Diagram",
+      "pages": [
+        47
+      ],
+      "visuals": [
+        {
+          "page": 47,
+          "description": "An exploded assembly diagram showing all parts of the product. Each part is numbered and corresponds to the parts list on the previous page. The diagram includes components such as covers, brackets, PCBs, connectors, and more, illustrating their placement and relationship within the assembly."
+        }
+      ],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Limited 90 Day Warranty",
+      "pages": [
+        48
+      ],
+      "visuals": [],
+      "source": "owner-manual"
+    },
+    {
+      "title": "Quick Start Guide",
+      "pages": [
+        1
+      ],
+      "visuals": [
+        {
+          "page": 1,
+          "description": "Diagram showing the setup for wire spool loading, including components like wingnut, spacer, spindle, and brake pad. Instructions for connecting cables and installing the wire spool are provided with visual guidance. Additional visuals include a warning section with icons, a diagram for nozzle and contact tip setup, and illustrations for wire feed tension adjustment and welder plug-in process."
+        }
+      ],
+      "source": "quick-start-guide"
+    },
+    {
+      "title": "Cable Setup",
+      "pages": [
+        2
+      ],
+      "visuals": [
+        {
+          "page": 2,
+          "description": "Detailed diagrams for different cable setups: Stick, MIG, Flux, and TIG. Each setup includes labeled components such as ground clamps, electrode holders, MIG gun, TIG torch, and connections to terminals. The visuals provide step-by-step guidance for connecting each type of cable to the welder."
+        }
+      ],
+      "source": "quick-start-guide"
+    },
+    {
+      "title": "How to Choose a Welder",
+      "pages": [
+        1
+      ],
+      "visuals": [
+        {
+          "page": 1,
+          "description": "A detailed selection chart for choosing a welder based on skill level, shielding gas requirement, material type, material thickness, typical applications, and cleanliness of weld. The chart is divided into columns for different skill levels (Low, Moderate, High) and includes specific recommendations for welding processes such as Flux-Cored/FCAW, MIG/GMAW, Stick/SMAW, and TIG/GTAW. It also highlights the importance of input voltage (120V or 240V) and provides a duty cycle example for reference."
+        }
+      ],
+      "source": "selection-chart"
+    }
+  ]
+}

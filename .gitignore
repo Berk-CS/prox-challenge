@@ -1,0 +1,38 @@
+# Dependencies
+/node_modules/
+
+# Next.js / React build output
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environments & API Keys
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Others project directory
+others/
+
+# Python caching & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# System Files & Logs
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE settings
+.vscode/
+.idea/
