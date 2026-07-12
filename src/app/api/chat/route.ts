@@ -257,7 +257,7 @@ ${cleanText || ""}`;
         });
 
         const visualResponse = await client.messages.create({
-          model: "claude-opus",
+          model: "claude-sonnet-5",
           max_tokens: 50000,  //just in case ai goes nuts
           system: VISUAL_GENERATOR_PROMPT,
           messages: [
