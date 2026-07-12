@@ -229,6 +229,7 @@ CODE EXPECTATIONS (For React Components):
 - Include all necessary React imports at the top. Do NOT import relative local files.
 - Export exactly one main component: 'export default function App()'. Do NOT call ReactDOM.render.
 - Aesthetics: Style widgets to look modern, clean but simple.
+- the visual/widget/app you generate does not need to be fancy; don't write a thousand lines of code if two hundred generates good enough, functional product. functionality is the the number 1 goal. 
 
 OUTPUT WRAPPER:
 Wrap your entire generated code within opening and closing <antArtifact> tags. Do not output conversational filler text or write markdown wrappers around the artifact.
@@ -256,8 +257,8 @@ ${cleanText || ""}`;
         });
 
         const visualResponse = await client.messages.create({
-          model: "claude-sonnet-5",
-          max_tokens: 4096,
+          model: "claude-opus",
+          max_tokens: 50000,  //just in case ai goes nuts
           system: VISUAL_GENERATOR_PROMPT,
           messages: [
             { role: "user", content: visualQuery }
