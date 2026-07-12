@@ -91,3 +91,6 @@ The entire application is consolidated into a single-repo Next.js architecture, 
 
 * **Industrial-Theming** - Designed with a premium, high-contrast dark mode tailored for shop environments. The typography, amber accents, and visual states feel native to an industrial welding interface.
 
+## 🎥 Demo Walkthrough
+
+<!-- PLACE YOUR CURSOR BELOW AND DRAG-DROP YOUR MP4 VIDEO HERE ON GITHUB.COM -->
