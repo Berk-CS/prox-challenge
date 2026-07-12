@@ -93,4 +93,4 @@ The entire application is consolidated into a single-repo Next.js architecture, 
 
 ## 🎥 Demo Walkthrough
 
-<!-- PLACE YOUR CURSOR BELOW AND DRAG-DROP YOUR MP4 VIDEO HERE ON GITHUB.COM -->
+https://streamable.com/ohj0wy
